@@ -58,6 +58,30 @@
         linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
       background-size: 42px 42px;
+      animation: gridDrift 22s linear infinite;
+    }
+    @keyframes gridDrift {
+      0% { background-position: 0 0; }
+      100% { background-position: 84px 84px; }
+    }
+
+    .hero-glow { animation: glowPulse 6s ease-in-out infinite; }
+    .hero-glow-delay { animation: glowPulse 6s ease-in-out infinite; animation-delay: 1.2s; }
+    @keyframes glowPulse {
+      0%, 100% { transform: scale(1) translate(0, 0); opacity: .8; }
+      50% { transform: scale(1.15) translate(10px, -10px); opacity: 1; }
+    }
+
+    .hero-image-float { animation: imageFloat 5.5s ease-in-out infinite; }
+    @keyframes imageFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-16px); }
+    }
+
+    .hero-chip-float { animation: chipFloat 4.5s ease-in-out infinite; }
+    @keyframes chipFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
 
     .glass { background: rgba(255,255,255,.08); backdrop-filter: blur(14px); }
@@ -94,10 +118,14 @@
 
     /* ESTILOS BANNER PROMOCIONAL */
     .promo-banner {
+      position: relative;
+      overflow: hidden;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(135deg, #1d3557 0%, #2563eb 50%, #1e40af 100%);
+      background: linear-gradient(120deg, #1d3557 0%, #2563eb 45%, #1e40af 70%, #2563eb 100%);
+      background-size: 250% 250%;
+      animation: bannerGradient 9s ease-in-out infinite;
       padding: 14px 28px;
       font-family: system-ui, -apple-system, sans-serif;
       color: #ffffff;
@@ -106,7 +134,30 @@
       flex-wrap: wrap;
     }
 
-    .promo-content { display: flex; align-items: center; gap: 14px; }
+    /* Brillo que recorre el banner de punta a punta */
+    .promo-banner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,.18) 45%, rgba(255,255,255,.35) 50%, rgba(255,255,255,.18) 55%, transparent 100%);
+      transform: skewX(-20deg);
+      animation: promoShine 5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes bannerGradient {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes promoShine {
+      0% { left: -60%; }
+      35%, 100% { left: 140%; }
+    }
+
+    .promo-content { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; }
     .promo-icon {
       background-color: rgba(255, 255, 255, 0.15);
       border-radius: 50%;
@@ -115,8 +166,17 @@
       align-items: center;
       justify-content: center;
       color: #ffcc00;
+      animation: iconWiggle 3.2s ease-in-out infinite;
     }
-    .promo-text-container { display: flex; flex-direction: column; gap: 2px; }
+    @keyframes iconWiggle {
+      0%, 100% { transform: rotate(0deg); }
+      75% { transform: rotate(0deg); }
+      80% { transform: rotate(-9deg); }
+      88% { transform: rotate(8deg); }
+      94% { transform: rotate(-4deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .promo-text-container { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; }
     .promo-tag {
       background-color: #ffcc00;
       color: #0f172a;
@@ -137,8 +197,15 @@
       font-weight: 900;
       font-size: 1.25rem;
       display: inline-block;
+      animation: badgePulse 2.4s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,204,0,.5); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(255,204,0,0); }
     }
     .promo-btn {
+      position: relative;
+      z-index: 1;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -157,6 +224,14 @@
     @media (max-width: 768px) {
       .promo-banner { justify-content: center; text-align: center; }
       .promo-content { flex-direction: column; }
+    }
+
+    /* Respetamos a quienes prefieren menos movimiento en pantalla */
+    @media (prefers-reduced-motion: reduce) {
+      .promo-banner, .promo-banner::after, .promo-icon, .highlight-badge,
+      .hero-glow, .hero-image-float, .hero-chip-float {
+        animation: none !important;
+      }
     }
   </style>
 </head>
@@ -266,39 +341,67 @@
     <div class="absolute inset-0 bg-gradient-to-br from-blue-700/20 via-transparent to-black/30"></div>
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-      <div class="max-w-3xl">
-        <div class="inline-flex items-center gap-2 glass border border-white/10 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[.16em] mb-6">
-          <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
-          Rosario, Santa Fe
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+        <div class="max-w-3xl">
+          <div class="inline-flex items-center gap-2 glass border border-white/10 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[.16em] mb-6">
+            <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
+            Rosario, Santa Fe
+          </div>
+
+          <h1 class="font-heading text-4xl sm:text-5xl md:text-7xl font-black leading-[.95] tracking-tight">
+            Tu próximo iPhone
+            <span class="text-blue-400">empieza acá.</span>
+          </h1>
+
+          <p class="mt-6 text-slate-300 text-base md:text-lg max-w-2xl leading-relaxed">
+            iPhones usados y sellados, AirPods y accesorios. Equipos seleccionados con stock inmediato o encargo a pedido.
+          </p>
+
+          <!-- BANNER REGALOS INCLUIDOS -->
+          <div class="mt-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-400/30 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-900 flex items-center justify-center shrink-0 font-bold text-lg">
+              <i class="fa-solid fa-gift"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-emerald-300 text-sm sm:text-base">¡COMBO REGALO EN TODOS LOS EQUIPOS!</h4>
+              <p class="text-xs text-slate-200">Todos los iPhones vienen de regalo con <strong>Funda transparente, Fuente, Cable y Vidrio Templado</strong>.</p>
+            </div>
+          </div>
+
+          <div class="mt-8 flex flex-col sm:flex-row gap-3">
+            <button onclick="setCategory('iphone')" class="bg-white text-matos hover:bg-slate-100 px-6 py-3.5 rounded-xl font-extrabold transition shadow-xl">
+              Ver iPhones
+            </button>
+            <a id="hero-whatsapp" href="#" target="_blank" class="border border-white/20 hover:bg-white/10 px-6 py-3.5 rounded-xl font-bold transition text-center flex items-center justify-center">
+              <i class="fa-brands fa-whatsapp mr-2"></i>Consultar por WhatsApp
+            </a>
+          </div>
+
+          <div class="mt-9 flex flex-wrap items-center gap-x-8 gap-y-3 text-xs sm:text-sm text-slate-300 font-semibold">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-emerald-400"></i>Garantía en todos los equipos</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-credit-card text-emerald-400"></i>Hasta 18 cuotas fijas</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-emerald-400"></i>Entrega inmediata en Rosario</span>
+          </div>
         </div>
 
-        <h1 class="font-heading text-4xl sm:text-5xl md:text-7xl font-black leading-[.95] tracking-tight">
-          Tu próximo iPhone
-          <span class="text-blue-400">empieza acá.</span>
-        </h1>
+        <!-- IMAGEN DE PRODUCTO -->
+        <div class="relative flex justify-center lg:justify-end">
+          <div class="hero-glow absolute w-72 h-72 sm:w-96 sm:h-96 bg-blue-500/30 rounded-full blur-3xl"></div>
+          <div class="hero-glow-delay absolute w-56 h-56 sm:w-72 sm:h-72 bg-emerald-400/20 rounded-full blur-3xl translate-x-10 translate-y-10"></div>
 
-        <p class="mt-6 text-slate-300 text-base md:text-lg max-w-2xl leading-relaxed">
-          iPhones usados y sellados, AirPods y accesorios. Equipos seleccionados con stock inmediato o encargo a pedido.
-        </p>
+          <div class="relative w-full max-w-sm">
+            <img src="img/iphone-17-pro-plata.png" alt="iPhone 17 Pro" class="hero-image-float relative w-full h-auto drop-shadow-[0_35px_45px_rgba(0,0,0,0.45)] select-none pointer-events-none" draggable="false">
 
-        <!-- BANNER REGALOS INCLUIDOS -->
-        <div class="mt-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-400/30 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-900 flex items-center justify-center shrink-0 font-bold text-lg">
-            <i class="fa-solid fa-gift"></i>
+            <div class="hero-chip-float hidden sm:flex absolute -left-6 top-10 glass border border-white/15 rounded-2xl px-4 py-3 items-center gap-2.5 shadow-xl">
+              <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+              <span class="text-xs font-bold">Garantía incluida</span>
+            </div>
+
+            <div class="hero-chip-float hidden sm:flex absolute -right-4 bottom-14 glass border border-white/15 rounded-2xl px-4 py-3 items-center gap-2.5 shadow-xl" style="animation-delay: 1.4s;">
+              <i class="fa-solid fa-gift text-emerald-400"></i>
+              <span class="text-xs font-bold">Accesorios de regalo</span>
+            </div>
           </div>
-          <div>
-            <h4 class="font-bold text-emerald-300 text-sm sm:text-base">¡COMBO REGALO EN TODOS LOS EQUIPOS!</h4>
-            <p class="text-xs text-slate-200">Todos los iPhones vienen de regalo con <strong>Funda transparente, Fuente, Cable y Vidrio Templado</strong>.</p>
-          </div>
-        </div>
-
-        <div class="mt-8 flex flex-col sm:flex-row gap-3">
-          <button onclick="setCategory('iphone')" class="bg-white text-matos hover:bg-slate-100 px-6 py-3.5 rounded-xl font-extrabold transition shadow-xl">
-            Ver iPhones
-          </button>
-          <a id="hero-whatsapp" href="#" target="_blank" class="border border-white/20 hover:bg-white/10 px-6 py-3.5 rounded-xl font-bold transition text-center flex items-center justify-center">
-            <i class="fa-brands fa-whatsapp mr-2"></i>Consultar por WhatsApp
-          </a>
         </div>
       </div>
     </div>
