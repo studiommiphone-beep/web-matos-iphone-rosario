@@ -1,0 +1,9 @@
+{
+  "name": "matos-iphone-rosario",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sitio y panel de administración de Matos iPhone Rosario",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

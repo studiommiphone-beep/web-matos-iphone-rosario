@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Panel Admin | Matos iPhone Rosario</title>
+
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <script src="config.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'], heading: ['Outfit', 'sans-serif'] },
+          colors: { matos: { DEFAULT: '#031435', dark: '#010a1c', light: '#0a2354' } }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html, body { max-width: 100%; overflow-x: hidden; }
+    body { font-family: Inter, sans-serif; }
+    h1,h2,h3,h4,.font-heading { font-family: Outfit, sans-serif; }
+    .toast { transform: translateY(130px); opacity: 0; pointer-events: none; transition: .3s ease; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Evita que iOS Safari haga zoom automático al tocar un input/select */
+    @media (max-width: 767px) {
+      input, select, textarea { font-size: 16px !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen">
+
+  <!-- PANTALLA DE LOGIN -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white/5 border border-white/10 rounded-3xl p-8 text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center text-2xl mb-4">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h1 class="font-heading text-xl font-black">Panel de Administración</h1>
+      <p class="text-slate-400 text-sm mt-1">Matos iPhone Rosario</p>
+
+      <form onsubmit="intentarLogin(event)" class="mt-6 space-y-3">
+        <input id="login-password" type="password" placeholder="Contraseña" required autofocus
+          class="w-full rounded-xl p-3.5 bg-white/10 border border-white/10 outline-none text-sm text-center">
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-extrabold transition text-sm">
+          Ingresar
+        </button>
+      </form>
+      <p id="login-error" class="hidden text-red-400 text-xs mt-3 font-bold">Contraseña incorrecta.</p>
+      <a href="index.html" class="inline-block mt-6 text-slate-500 hover:text-slate-300 text-xs">← Volver al sitio</a>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden">
+    <header class="sticky top-0 z-30 bg-matos/95 backdrop-blur-xl border-b border-white/10 shadow-lg">
+      <div class="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+          <img src="Logo.png" alt="Matos" class="h-7 sm:h-9 w-auto object-contain shrink-0">
+          <div class="min-w-0">
+            <p class="hidden sm:block text-[10px] uppercase tracking-widest text-blue-400 font-bold truncate">Gestión de Inventario, Precios y Galería</p>
+            <h1 class="font-heading text-sm sm:text-lg font-black leading-tight truncate">Panel de Administración</h1>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <a href="index.html" class="text-xs font-bold px-2.5 sm:px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition whitespace-nowrap"><i class="fa-solid fa-arrow-left sm:mr-1.5"></i><span class="hidden sm:inline">Ver sitio</span></a>
+          <button onclick="cerrarSesion()" class="text-xs font-bold px-2.5 sm:px-3 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 transition whitespace-nowrap">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+
+      <form onsubmit="saveProduct(event)" class="grid md:grid-cols-3 gap-6">
+        <input type="hidden" id="p-id" value="">
+
+        <!-- INFO DEL PRODUCTO -->
+        <div class="md:col-span-2 space-y-5">
+
+          <div class="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/10">
+            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">1. Información del Producto</h3>
+
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Nombre / Modelo</label>
+                <input id="p-nombre" required placeholder="Ej. iPhone 15 Pro Max" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Categoría</label>
+                <select id="p-categoria" class="w-full rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-sm">
+                  <option value="iphone">iPhone</option>
+                  <option value="watch">Apple Watch</option>
+                  <option value="airpods">AirPods</option>
+                  <option value="accesorios">Accesorios</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="col-span-2 sm:col-span-1">
+                <label class="text-xs text-slate-400 mb-1 block">Condición</label>
+                <select id="p-condicion" class="w-full rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-sm">
+                  <option value="Nuevo">Nuevo / Sellado</option>
+                  <option value="Open Box">Open Box</option>
+                  <option value="Como Nuevo">Usado</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Disponibilidad</label>
+                <select id="p-disponibilidad" class="w-full rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-sm">
+                  <option value="En Stock">En Stock</option>
+                  <option value="A pedido">A Pedido</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Unidades (Stock)</label>
+                <input id="p-stock" type="number" min="0" value="1" required class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Batería</label>
+                <input id="p-bateria" placeholder="Ej: 95% o 100%" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Especificaciones / Detalles</label>
+                <input id="p-specs" required placeholder="Ej: 256GB · Lavender · Estética A+" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">IMEI (últimos 4 dígitos)</label>
+                <input id="p-imei" maxlength="8" placeholder="Ej: 6854" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+                <p class="text-[10px] text-slate-500 mt-1">Se muestra en el mensaje de WhatsApp para identificar el equipo exacto. Opcional.</p>
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Garantía (texto a mostrar)</label>
+                <input id="p-garantia" placeholder="Ej: 1 año de garantía Apple / Garantía 6 meses incluida" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+                <p class="text-[10px] text-slate-500 mt-1">Si lo dejás vacío, se usa un texto por defecto según la condición.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- IMAGEN PRINCIPAL (IA / CATÁLOGO) -->
+          <div class="space-y-2 bg-white/5 p-5 rounded-2xl border border-white/10">
+            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">2. Imagen Principal (generada por IA / catálogo)</h3>
+            <p class="text-[11px] text-slate-400">Es la foto de tapa que se ve en el listado y en la vista principal de la ficha. Puede ser una imagen genérica del modelo (no la unidad física real).</p>
+
+            <div class="grid md:grid-cols-2 gap-3 items-center mt-2">
+              <select id="p-selector-modelo" onchange="seleccionarImagenPorModelo(this.value)" class="w-full rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-xs text-white">
+                <option value="">Elegir modelo del catálogo...</option>
+              </select>
+              <input id="p-imagen-url" type="url" placeholder="O pegar enlace web alternativo..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addUrlImage();}" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-xs">
+            </div>
+
+            <div id="image-previews-list" class="flex flex-wrap gap-2 mt-3"></div>
+          </div>
+
+          <!-- GALERÍA REAL DE FOTOS / VIDEOS -->
+          <div class="space-y-2 bg-white/5 p-5 rounded-2xl border border-emerald-500/20">
+            <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-camera"></i> 3. Galería Real (fotos y videos del equipo físico en stock)
+            </h3>
+            <p class="text-[11px] text-slate-400">Subí fotos y/o videos reales del equipo que tenés en el local. Se muestran aparte, en la ficha del producto, para dar confianza al comprador. Máximo 6MB por archivo.</p>
+
+            <label class="mt-2 flex items-center justify-center gap-2 border-2 border-dashed border-white/15 hover:border-emerald-400/50 rounded-xl p-4 text-xs font-bold text-slate-300 cursor-pointer transition">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+              <span id="upload-label">Subir fotos / videos reales</span>
+              <input id="p-galeria-input" type="file" accept="image/*,video/*" multiple class="hidden" onchange="subirArchivosGaleria(event)">
+            </label>
+
+            <div id="galeria-real-list" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-3"></div>
+          </div>
+        </div>
+
+        <!-- PRECIOS -->
+        <div class="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/10 flex flex-col justify-between h-fit">
+          <div>
+            <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-3">4. Precios & Ganancia</h3>
+
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Costo Base Equipo (USD)</label>
+                <input id="p-costo-base" type="number" step="0.01" min="0" value="700" oninput="calcularPrecioAdmin()" required class="w-full rounded-xl p-3 bg-white/10 border border-white/10 font-bold text-white outline-none text-sm">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Precio Venta Directo (USD)</label>
+                <input id="p-precio-directo" type="number" step="0.01" min="0" value="820" oninput="calcularPrecioAdmin()" required class="w-full rounded-xl p-3 bg-white/10 border border-emerald-500/50 font-bold text-emerald-300 outline-none text-base">
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Precio Original / Sin Rebaja (USD)</label>
+                <input id="p-precio-original" type="number" step="0.01" min="0" placeholder="Dejar vacío si no hay rebaja" class="w-full rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+                <p class="text-[10px] text-slate-500 mt-1">Si es mayor al precio de venta, en el sitio se muestra tachado con el badge "Rebajado".</p>
+              </div>
+              <div>
+                <label class="text-xs text-slate-400 mb-1 block">Tipo de Cotización ARS</label>
+                <select id="p-tipo-cotizacion" onchange="calcularPrecioAdmin()" class="w-full rounded-xl p-2.5 bg-slate-800 border border-white/10 text-sm">
+                  <option value="blue">Dólar Blue Rosario (Auto)</option>
+                  <option value="oficial">Dólar Oficial</option>
+                  <option value="tarjeta">Dólar Tarjeta</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-xl border border-white/10 space-y-2 mt-4 text-xs">
+            <div class="flex justify-between items-baseline">
+              <span class="font-bold text-white">Precio Final USD:</span>
+              <strong id="preview-precio-usd" class="text-lg font-black text-blue-400">$0 USD</strong>
+            </div>
+            <div class="flex justify-between items-center text-[11px] text-slate-400">
+              <span>Precio Estimado ARS:</span>
+              <strong id="preview-precio-ars" class="text-white">$0 ARS</strong>
+            </div>
+            <div class="border-t border-white/10 pt-2 mt-2 flex justify-between items-center">
+              <span class="text-emerald-400 font-bold">Ganancia Neta (inc. 10USD accesorios):</span>
+              <strong id="preview-ganancia-neta" class="text-emerald-300 font-black text-sm">$0 USD</strong>
+            </div>
+          </div>
+
+          <div class="flex gap-2 mt-2">
+            <button type="submit" id="btn-save-admin" class="flex-1 bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-extrabold transition text-sm shadow-lg cursor-pointer">
+              Guardar Producto
+            </button>
+            <button type="button" id="btn-cancel-edit" onclick="resetAdminForm()" class="hidden bg-slate-700 hover:bg-slate-600 px-4 py-3.5 rounded-xl text-xs font-bold">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- TABLA -->
+      <div class="mt-10 border-t border-white/10 pt-8">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h3 class="font-heading text-lg font-bold">Inventario Cargado</h3>
+          <span id="dolar-info" class="text-xs text-slate-400"></span>
+        </div>
+        <p class="sm:hidden text-[11px] text-slate-500 mb-2"><i class="fa-solid fa-arrows-left-right mr-1"></i>Deslizá la tabla hacia los costados para ver todas las columnas</p>
+        <div class="overflow-x-auto rounded-2xl border border-white/10" style="-webkit-overflow-scrolling: touch;">
+          <table class="w-full text-left text-xs" style="min-width: 640px;">
+            <thead class="bg-white/5 text-slate-400 font-bold uppercase">
+              <tr>
+                <th class="p-3">Producto</th>
+                <th class="p-3">Detalle</th>
+                <th class="p-3">IMEI</th>
+                <th class="p-3">Unidades</th>
+                <th class="p-3">Precio USD</th>
+                <th class="p-3">Galería real</th>
+                <th class="p-3 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-productos-list" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] bg-slate-800 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold">
+    Listo
+  </div>
+
+  <script>
+    // ============================================================
+    // CATÁLOGO DE IMÁGENES PRINCIPALES (generadas por IA)
+    // Agregá acá nuevos modelos/colores a medida que sumes imágenes
+    // a la carpeta /img
+    // ============================================================
+    const CATALOGO_MODELOS = {
+      "iPhone 17 (Verde)": "img/iphone-17-verde.png",
+      "iPhone 17 (Lavanda)": "img/iphone-17-lavanda.png",
+      "iPhone 17 Pro (Plata)": "img/iphone-17-pro-plata.png",
+      "iPhone 16 Pro Max": "img/iphone-16-pro-max.jpg",
+      "iPhone 15 (Rosa)": "img/iphone-15-rosa.png",
+      "iPhone 15 Pro (Negro)": "img/iphone-15-pro-negro.png",
+      "iPhone 15 Pro (Titanio Natural)": "img/iphone-15-pro-titanio-natural.png",
+      "iPhone 15 Pro (Blanco)": "img/iphone-15-pro-blanco.png"
+    };
+
+    let dolarOficial = CONFIG.dolarOficialInicial;
+    let dolarTarjeta = CONFIG.dolarTarjetaInicial;
+    let dolarBlueRosario = CONFIG.dolarInicial;
+    const ACCESORIOS_REGALO_COSTO = 10;
+
+    let productos = [];
+    let currentTempImages = [];
+    let currentGaleriaReal = []; // [{url, tipo, nombre}]
+
+    // ---------- LOGIN ----------
+    function intentarLogin(event) {
+      event.preventDefault();
+      const pass = document.getElementById('login-password').value;
+      if (pass === ADMIN_PASSWORD) {
+        sessionStorage.setItem('matos_admin_auth', '1');
+        mostrarDashboard();
+      } else {
+        document.getElementById('login-error').classList.remove('hidden');
+      }
+    }
+
+    function cerrarSesion() {
+      sessionStorage.removeItem('matos_admin_auth');
+      location.reload();
+    }
+
+    function mostrarDashboard() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      inicializarPanel();
+    }
+
+    if (sessionStorage.getItem('matos_admin_auth') === '1') {
+      mostrarDashboard();
+    }
+
+    // ---------- INICIALIZACIÓN ----------
+    async function inicializarPanel() {
+      const selector = document.getElementById('p-selector-modelo');
+      selector.innerHTML = '<option value="">Elegir modelo del catálogo...</option>' +
+        Object.keys(CATALOGO_MODELOS).map(nombre => `<option value="${escapeHTML(nombre)}">${escapeHTML(nombre)}</option>`).join('');
+
+      await obtenerDolarBlueRosario();
+      await cargarProductosRemotos();
+      calcularPrecioAdmin();
+    }
+
+    async function obtenerDolarBlueRosario() {
+      try {
+        const response = await fetch("https://dolarapi.com/v1/dolares/blue", { method: "GET", cache: "no-store" });
+        const data = await response.json();
+        if (data.venta) dolarBlueRosario = Number(data.venta);
+      } catch (error) {
+        dolarBlueRosario = CONFIG.dolarInicial;
+      }
+      document.getElementById('dolar-info').textContent = `Dólar Blue Rosario: $${moneyARS(dolarBlueRosario)} ARS`;
+    }
+
+    async function cargarProductosRemotos() {
+      try {
+        const response = await fetch('/.netlify/functions/jsonbin');
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        const datos = await response.json();
+        const record = datos.record || datos.items || datos;
+        if (record && record.length) productos = record;
+      } catch (error) {
+        console.error('Error al cargar productos:', error);
+        productos = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
+      }
+      renderAdminTable();
+    }
+
+    async function guardarProductosRemotos() {
+      localStorage.setItem('matos_productos_v6', JSON.stringify(productos));
+      try {
+        const response = await fetch('/.netlify/functions/jsonbin', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productos)
+        });
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('Error al guardar productos:', error);
+        showToast('⚠️ No se pudo guardar en la nube, revisá la conexión');
+      }
+    }
+
+    // ---------- PRECIOS ----------
+    function calcularPrecioProducto(producto) {
+      const costoOriginal = Number(producto.costoBaseUSD || 0);
+      const costoTotalUSD = costoOriginal + ACCESORIOS_REGALO_COSTO;
+      const precioUSD = Number(producto.precioDirectoUSD || 0);
+
+      let cotizacionAplicada = dolarBlueRosario;
+      if (producto.tipoCotizacion === 'oficial') cotizacionAplicada = dolarOficial;
+      if (producto.tipoCotizacion === 'tarjeta') cotizacionAplicada = dolarTarjeta;
+
+      return {
+        precioFinalUSD: precioUSD,
+        cotizacionAplicada,
+        precioFinalARS: precioUSD * cotizacionAplicada,
+        gananciaNetaUSD: precioUSD - costoTotalUSD
+      };
+    }
+
+    const moneyUSD = value => new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
+    const moneyARS = value => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(value);
+
+    function escapeHTML(value = '') {
+      return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[char]));
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function calcularPrecioAdmin() {
+      const tempProducto = {
+        costoBaseUSD: Number(document.getElementById('p-costo-base').value || 0),
+        precioDirectoUSD: Number(document.getElementById('p-precio-directo').value || 0),
+        tipoCotizacion: document.getElementById('p-tipo-cotizacion').value
+      };
+      const res = calcularPrecioProducto(tempProducto);
+      document.getElementById('preview-precio-usd').textContent = `$${moneyUSD(res.precioFinalUSD)} USD`;
+      document.getElementById('preview-precio-ars').textContent = `$${moneyARS(res.precioFinalARS)} ARS`;
+      document.getElementById('preview-ganancia-neta').textContent = `$${moneyUSD(res.gananciaNetaUSD)} USD`;
+    }
+
+    // ---------- IMAGEN PRINCIPAL ----------
+    function seleccionarImagenPorModelo(nombreModelo) {
+      if (!nombreModelo || !CATALOGO_MODELOS[nombreModelo]) return;
+      const ruta = CATALOGO_MODELOS[nombreModelo];
+      if (!currentTempImages.includes(ruta)) {
+        currentTempImages.push(ruta);
+        renderTempImages();
+      }
+      document.getElementById('p-selector-modelo').value = '';
+    }
+
+    function addUrlImage() {
+      const input = document.getElementById('p-imagen-url');
+      if (input.value.trim()) {
+        currentTempImages.push(input.value.trim());
+        input.value = '';
+        renderTempImages();
+      }
+    }
+
+    function removeTempImage(idx) {
+      currentTempImages.splice(idx, 1);
+      renderTempImages();
+    }
+
+    function renderTempImages() {
+      const container = document.getElementById('image-previews-list');
+      container.innerHTML = currentTempImages.map((img, idx) => `
+        <div class="relative w-16 h-16 rounded-lg overflow-hidden border border-white/20">
+          <img src="${escapeHTML(img)}" class="w-full h-full object-cover">
+          <button type="button" onclick="removeTempImage(${idx})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">×</button>
+        </div>
+      `).join('');
+    }
+
+    // ---------- GALERÍA REAL (fotos/videos subidos) ----------
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function subirArchivosGaleria(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      const label = document.getElementById('upload-label');
+      const labelOriginal = label.textContent;
+
+      for (const file of files) {
+        label.textContent = `Subiendo ${file.name}...`;
+        try {
+          const base64 = await fileToBase64(file);
+          const response = await fetch('/.netlify/functions/media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, contentType: file.type, data: base64 })
+          });
+          const resultado = await response.json();
+          if (!response.ok) throw new Error(resultado.error || 'Error al subir el archivo');
+
+          currentGaleriaReal.push({
+            url: resultado.url,
+            key: resultado.key,
+            tipo: file.type.startsWith('video') ? 'video' : 'imagen',
+            nombre: file.name
+          });
+          renderGaleriaReal();
+        } catch (error) {
+          alert(`No se pudo subir "${file.name}": ${error.message}`);
+        }
+      }
+
+      label.textContent = labelOriginal;
+      event.target.value = '';
+    }
+
+    async function eliminarItemGaleria(idx) {
+      const item = currentGaleriaReal[idx];
+      if (!item) return;
+      if (!confirm('¿Eliminar este archivo de la galería?')) return;
+
+      if (item.key) {
+        try {
+          await fetch(`/.netlify/functions/media?key=${encodeURIComponent(item.key)}`, { method: 'DELETE' });
+        } catch (error) {
+          console.error('No se pudo borrar el archivo del almacenamiento:', error);
+        }
+      }
+      currentGaleriaReal.splice(idx, 1);
+      renderGaleriaReal();
+    }
+
+    function renderGaleriaReal() {
+      const container = document.getElementById('galeria-real-list');
+      container.innerHTML = currentGaleriaReal.map((item, idx) => `
+        <div class="relative aspect-square rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900">
+          ${item.tipo === 'video' ? `
+            <video src="${escapeHTML(item.url)}" class="w-full h-full object-cover" muted></video>
+            <span class="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded">
+              <i class="fa-solid fa-video"></i> Video
+            </span>
+          ` : `
+            <img src="${escapeHTML(item.url)}" class="w-full h-full object-cover">
+          `}
+          <button type="button" onclick="eliminarItemGaleria(${idx})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center">×</button>
+        </div>
+      `).join('') || '<p class="text-[11px] text-slate-500 col-span-full">Todavía no subiste fotos ni videos reales de este equipo.</p>';
+    }
+
+    // ---------- TABLA / CRUD ----------
+    function renderAdminTable() {
+      const tbody = document.getElementById('admin-productos-list');
+      tbody.innerHTML = productos.map(prod => `
+        <tr class="hover:bg-white/5">
+          <td class="p-3 font-bold">${escapeHTML(prod.nombre)}</td>
+          <td class="p-3 text-slate-400">${escapeHTML(prod.specs)}</td>
+          <td class="p-3 text-slate-400">${prod.imei ? `...${escapeHTML(prod.imei)}` : '—'}</td>
+          <td class="p-3 font-bold">${prod.stock}</td>
+          <td class="p-3 font-bold text-emerald-400">
+            $${moneyUSD(prod.precioDirectoUSD)}
+            ${Number(prod.precioOriginalUSD) > Number(prod.precioDirectoUSD) ? `<span class="block text-[10px] text-slate-500 line-through font-normal">$${moneyUSD(prod.precioOriginalUSD)}</span>` : ''}
+          </td>
+          <td class="p-3 text-slate-400">${prod.galeria && prod.galeria.length ? `<i class="fa-solid fa-images text-emerald-400 mr-1"></i>${prod.galeria.length}` : '—'}</td>
+          <td class="p-3 text-right space-x-2">
+            <button type="button" onclick="editProduct(${prod.id})" class="text-blue-400"><i class="fa-solid fa-pen"></i></button>
+            <button type="button" onclick="deleteProduct(${prod.id})" class="text-red-400"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="p-6 text-center text-slate-500">Todavía no cargaste productos.</td></tr>';
+    }
+
+    function editProduct(id) {
+      const prod = productos.find(p => p.id === id);
+      if (!prod) return;
+
+      document.getElementById('p-id').value = prod.id;
+      document.getElementById('p-nombre').value = prod.nombre;
+      document.getElementById('p-categoria').value = prod.categoria;
+      document.getElementById('p-condicion').value = prod.condicion;
+      document.getElementById('p-disponibilidad').value = prod.disponibilidad || 'En Stock';
+      document.getElementById('p-stock').value = prod.stock;
+      document.getElementById('p-bateria').value = prod.bateria;
+      document.getElementById('p-specs').value = prod.specs;
+      document.getElementById('p-imei').value = prod.imei || '';
+      document.getElementById('p-garantia').value = prod.garantia || '';
+      document.getElementById('p-costo-base').value = prod.costoBaseUSD;
+      document.getElementById('p-precio-directo').value = prod.precioDirectoUSD;
+      document.getElementById('p-precio-original').value = prod.precioOriginalUSD || '';
+      document.getElementById('p-tipo-cotizacion').value = prod.tipoCotizacion || 'blue';
+
+      currentTempImages = prod.imagenes ? [...prod.imagenes] : [];
+      currentGaleriaReal = prod.galeria ? [...prod.galeria] : [];
+      renderTempImages();
+      renderGaleriaReal();
+      calcularPrecioAdmin();
+
+      document.getElementById('btn-save-admin').textContent = 'Guardar Cambios';
+      document.getElementById('btn-cancel-edit').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetAdminForm() {
+      document.getElementById('p-id').value = '';
+      document.querySelector('main form').reset();
+      currentTempImages = [];
+      currentGaleriaReal = [];
+      renderTempImages();
+      renderGaleriaReal();
+      document.getElementById('btn-save-admin').textContent = 'Guardar Producto';
+      document.getElementById('btn-cancel-edit').classList.add('hidden');
+      calcularPrecioAdmin();
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('¿Eliminar producto?')) return;
+      productos = productos.filter(p => p.id !== id);
+      await guardarProductosRemotos();
+      renderAdminTable();
+      showToast('Producto eliminado');
+    }
+
+    async function saveProduct(event) {
+      event.preventDefault();
+      const existingId = document.getElementById('p-id').value;
+
+      const productData = {
+        id: existingId ? Number(existingId) : Date.now(),
+        nombre: document.getElementById('p-nombre').value.trim(),
+        categoria: document.getElementById('p-categoria').value,
+        condicion: document.getElementById('p-condicion').value,
+        disponibilidad: document.getElementById('p-disponibilidad').value,
+        costoBaseUSD: Number(document.getElementById('p-costo-base').value),
+        precioDirectoUSD: Number(document.getElementById('p-precio-directo').value),
+        precioOriginalUSD: document.getElementById('p-precio-original').value ? Number(document.getElementById('p-precio-original').value) : null,
+        tipoCotizacion: document.getElementById('p-tipo-cotizacion').value,
+        bateria: document.getElementById('p-bateria').value.trim() || 'N/A',
+        stock: Number(document.getElementById('p-stock').value),
+        specs: document.getElementById('p-specs').value.trim(),
+        imei: document.getElementById('p-imei').value.trim() || null,
+        garantia: document.getElementById('p-garantia').value.trim() || null,
+        imagenes: currentTempImages.length ? [...currentTempImages] : [],
+        galeria: currentGaleriaReal.length ? [...currentGaleriaReal] : []
+      };
+
+      if (existingId) {
+        const index = productos.findIndex(p => p.id === Number(existingId));
+        if (index !== -1) productos[index] = productData;
+      } else {
+        productos.push(productData);
+      }
+
+      await guardarProductosRemotos();
+      resetAdminForm();
+      renderAdminTable();
+      showToast('Guardado con éxito ✅');
+    }
+  </script>
+</body>
+</html>
