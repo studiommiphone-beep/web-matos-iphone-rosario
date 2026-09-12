@@ -74,6 +74,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
+          <span id="sync-status" class="hidden text-[11px] font-bold px-2.5 py-2 rounded-lg whitespace-nowrap"></span>
           <a href="index.html" class="text-xs font-bold px-2.5 sm:px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition whitespace-nowrap"><i class="fa-solid fa-arrow-left sm:mr-1.5"></i><span class="hidden sm:inline">Ver sitio</span></a>
           <button onclick="cerrarSesion()" class="text-xs font-bold px-2.5 sm:px-3 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 transition whitespace-nowrap">Salir</button>
         </div>
@@ -300,6 +301,21 @@
     let currentTempImages = [];
     let currentGaleriaReal = []; // [{url, tipo, nombre}]
 
+    function setSyncStatus(state, detail) {
+      const el = document.getElementById('sync-status');
+      if (!el) return;
+      el.classList.remove('hidden');
+      if (state === 'ok') {
+        el.className = 'text-[11px] font-bold px-2.5 py-2 rounded-lg whitespace-nowrap bg-emerald-500/15 text-emerald-400';
+        el.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i>Sincronizado';
+        el.title = 'El catálogo se está guardando y leyendo correctamente en la nube.';
+      } else {
+        el.className = 'text-[11px] font-bold px-2.5 py-2 rounded-lg whitespace-nowrap bg-red-500/15 text-red-400 cursor-help';
+        el.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i>Sin conexión con la nube';
+        el.title = detail || 'Los cambios no se están guardando en la nube: revisá JSONBIN_BIN_ID y JSONBIN_KEY en Netlify (Site settings → Environment variables) y volvé a desplegar.';
+      }
+    }
+
     // ---------- LOGIN ----------
     function intentarLogin(event) {
       event.preventDefault();
@@ -351,14 +367,18 @@
 
     async function cargarProductosRemotos() {
       try {
-        const response = await fetch('/.netlify/functions/jsonbin');
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        const response = await fetch('/api/jsonbin', { cache: 'no-store' });
         const datos = await response.json();
+        if (!response.ok || datos.error) {
+          throw new Error(datos.error || `Error HTTP: ${response.status}`);
+        }
         const record = datos.record || datos.items || datos;
         if (record && record.length) productos = record;
+        setSyncStatus('ok');
       } catch (error) {
-        console.error('Error al cargar productos:', error);
+        console.error('Error al cargar productos:', error.message);
         productos = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
+        setSyncStatus('error', error.message);
       }
       renderAdminTable();
     }
@@ -366,16 +386,21 @@
     async function guardarProductosRemotos() {
       localStorage.setItem('matos_productos_v6', JSON.stringify(productos));
       try {
-        const response = await fetch('/.netlify/functions/jsonbin', {
+        const response = await fetch('/api/jsonbin', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(productos)
         });
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-        return await response.json();
+        const resultado = await response.json();
+        if (!response.ok || resultado.error) {
+          throw new Error(resultado.error || `Error HTTP: ${response.status}`);
+        }
+        setSyncStatus('ok');
+        return resultado;
       } catch (error) {
-        console.error('Error al guardar productos:', error);
-        showToast('⚠️ No se pudo guardar en la nube, revisá la conexión');
+        console.error('Error al guardar datos:', error.message);
+        setSyncStatus('error', error.message);
+        showToast('⚠️ No se guardó en la nube: ' + error.message);
       }
     }
 
@@ -482,7 +507,7 @@
         label.textContent = `Subiendo ${file.name}...`;
         try {
           const base64 = await fileToBase64(file);
-          const response = await fetch('/.netlify/functions/media', {
+          const response = await fetch('/api/media', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: file.name, contentType: file.type, data: base64 })
@@ -513,7 +538,7 @@
 
       if (item.key) {
         try {
-          await fetch(`/.netlify/functions/media?key=${encodeURIComponent(item.key)}`, { method: 'DELETE' });
+          await fetch(`/api/media?key=${encodeURIComponent(item.key)}`, { method: 'DELETE' });
         } catch (error) {
           console.error('No se pudo borrar el archivo del almacenamiento:', error);
         }
@@ -606,9 +631,9 @@
     async function deleteProduct(id) {
       if (!confirm('¿Eliminar producto?')) return;
       productos = productos.filter(p => p.id !== id);
-      await guardarProductosRemotos();
+      const resultadoNube = await guardarProductosRemotos();
       renderAdminTable();
-      showToast('Producto eliminado');
+      if (resultadoNube) showToast('Producto eliminado (ya no aparece en la web)');
     }
 
     async function saveProduct(event) {
@@ -641,10 +666,12 @@
         productos.push(productData);
       }
 
-      await guardarProductosRemotos();
+      const resultadoNube = await guardarProductosRemotos();
       resetAdminForm();
       renderAdminTable();
-      showToast('Guardado con éxito ✅');
+      if (resultadoNube) {
+        showToast('Guardado con éxito ✅ (ya está visible en la web)');
+      }
     }
   </script>
 </body>

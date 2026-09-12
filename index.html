@@ -575,20 +575,22 @@
 
     async function cargarProductosRemotos() {
       try {
-        const response = await fetch('/.netlify/functions/jsonbin');
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
+        const response = await fetch('/api/jsonbin', { cache: 'no-store' });
         const datos = await response.json();
+        if (!response.ok || datos.error) {
+          throw new Error(datos.error || `Error HTTP: ${response.status}`);
+        }
         const record = datos.record || datos.items || datos;
         if (record && record.length) {
           productos = record;
+          localStorage.setItem('matos_productos_v6', JSON.stringify(productos));
         }
         renderProductos(getFilteredProducts());
         return datos;
       } catch (error) {
-        console.error('Error al cargar datos desde la Netlify Function:', error);
-        productos = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
+        console.error('Error al cargar datos desde la Netlify Function:', error.message);
+        const guardadosLocal = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
+        if (guardadosLocal.length) productos = guardadosLocal;
         renderProductos(getFilteredProducts());
       }
     }
@@ -596,7 +598,7 @@
     async function guardarProductosRemotos() {
       localStorage.setItem('matos_productos_v6', JSON.stringify(productos));
       try {
-        const response = await fetch('/.netlify/functions/jsonbin', {
+        const response = await fetch('/api/jsonbin', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -1126,6 +1128,13 @@
     document.addEventListener('DOMContentLoaded', () => {
       obtenerDolarBlueRosario();
       cargarProductosRemotos();
+    });
+
+    // Mantiene la tienda al día sola: reconsulta el catálogo cada 45s
+    // y también apenas el visitante vuelve a la pestaña (sin recargar la página).
+    setInterval(cargarProductosRemotos, 45000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') cargarProductosRemotos();
     });
   </script>
 </body>
