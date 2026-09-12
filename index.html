@@ -343,9 +343,14 @@
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
       <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
         <div class="max-w-3xl">
-          <div class="inline-flex items-center gap-2 glass border border-white/10 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[.16em] mb-6">
-            <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
-            Rosario, Santa Fe
+          <div class="inline-flex flex-wrap items-center gap-2 sm:gap-3 glass border border-emerald-400/30 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[.1em] mb-6">
+            <span class="flex items-center gap-1.5 text-white">
+              <i class="fa-solid fa-location-dot text-emerald-400"></i>Rosario, Santa Fe
+            </span>
+            <span class="hidden sm:inline text-white/30">|</span>
+            <span class="flex items-center gap-1.5 text-emerald-300">
+              <i class="fa-solid fa-truck-fast"></i>Envíos a todo el país
+            </span>
           </div>
 
           <h1 class="font-heading text-4xl sm:text-5xl md:text-7xl font-black leading-[.95] tracking-tight">
@@ -357,20 +362,20 @@
             iPhones usados y sellados, AirPods y accesorios. Equipos seleccionados con stock inmediato o encargo a pedido.
           </p>
 
-          <!-- BANNER REGALOS INCLUIDOS -->
+          <!-- BANNER COMPRÁ SEGURO -->
           <div class="mt-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-400/30 flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-900 flex items-center justify-center shrink-0 font-bold text-lg">
-              <i class="fa-solid fa-gift"></i>
+              <i class="fa-solid fa-circle-check"></i>
             </div>
             <div>
-              <h4 class="font-bold text-emerald-300 text-sm sm:text-base">¡COMBO REGALO EN TODOS LOS EQUIPOS!</h4>
+              <h4 class="font-bold text-emerald-300 text-sm sm:text-base">¡COMPRÁ SEGURO EN TODOS LOS EQUIPOS!</h4>
               <p class="text-xs text-slate-200">Todos los iPhones vienen de regalo con <strong>Funda transparente, Fuente, Cable y Vidrio Templado</strong>.</p>
             </div>
           </div>
 
           <div class="mt-8 flex flex-col sm:flex-row gap-3">
-            <button onclick="setCategory('iphone')" class="bg-white text-matos hover:bg-slate-100 px-6 py-3.5 rounded-xl font-extrabold transition shadow-xl">
-              Ver iPhones
+            <button onclick="setCategory('iphone')" class="bg-white text-matos hover:bg-slate-100 px-6 py-3.5 rounded-xl font-extrabold transition shadow-xl inline-flex items-center justify-center gap-2">
+              Ver iPhones <i class="fa-solid fa-arrow-right"></i>
             </button>
             <a id="hero-whatsapp" href="#" target="_blank" class="border border-white/20 hover:bg-white/10 px-6 py-3.5 rounded-xl font-bold transition text-center flex items-center justify-center">
               <i class="fa-brands fa-whatsapp mr-2"></i>Consultar por WhatsApp
@@ -379,7 +384,7 @@
 
           <div class="mt-9 flex flex-wrap items-center gap-x-8 gap-y-3 text-xs sm:text-sm text-slate-300 font-semibold">
             <span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-emerald-400"></i>Garantía en todos los equipos</span>
-            <span class="flex items-center gap-2"><i class="fa-solid fa-credit-card text-emerald-400"></i>Hasta 18 cuotas fijas</span>
+            <span class="flex items-center gap-2"><i class="fa-solid fa-truck-fast text-emerald-400"></i>Envíos a Rosario y a todo el país</span>
             <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-emerald-400"></i>Entrega inmediata en Rosario</span>
           </div>
         </div>
@@ -390,14 +395,17 @@
           <div class="hero-glow-delay absolute w-56 h-56 sm:w-72 sm:h-72 bg-emerald-400/20 rounded-full blur-3xl translate-x-10 translate-y-10"></div>
 
           <div class="relative w-full max-w-sm">
-            <img src="img/iphone-17-pro-plata.png" alt="iPhone 17 Pro" class="hero-image-float relative w-full h-auto drop-shadow-[0_35px_45px_rgba(0,0,0,0.45)] select-none pointer-events-none" draggable="false">
+            <img src="img/iPhone-17-pro-plata-Photoroom.png" alt="iPhone 17 Pro" class="hero-image-float relative z-10 w-full h-auto drop-shadow-[0_35px_45px_rgba(0,0,0,0.45)] select-none pointer-events-none" draggable="false">
 
-            <div class="hero-chip-float hidden sm:flex absolute -left-6 top-10 glass border border-white/15 rounded-2xl px-4 py-3 items-center gap-2.5 shadow-xl">
+            <!-- AirPods Pro asomando junto al iPhone -->
+            <img src="img/airpods-pro-2.png" alt="AirPods Pro" class="hero-image-float absolute z-20 -bottom-2 -right-8 sm:-right-14 w-[38%] h-auto drop-shadow-[0_20px_25px_rgba(0,0,0,0.4)] select-none pointer-events-none" style="animation-delay: .8s;" draggable="false">
+
+            <div class="hero-chip-float hidden sm:flex absolute -left-6 top-10 glass border border-white/15 rounded-2xl px-4 py-3 items-center gap-2.5 shadow-xl z-20">
               <i class="fa-solid fa-shield-halved text-emerald-400"></i>
               <span class="text-xs font-bold">Garantía incluida</span>
             </div>
 
-            <div class="hero-chip-float hidden sm:flex absolute -right-4 bottom-14 glass border border-white/15 rounded-2xl px-4 py-3 items-center gap-2.5 shadow-xl" style="animation-delay: 1.4s;">
+            <div class="hero-chip-float hidden sm:flex absolute -right-2 top-4 glass border border-white/15 rounded-2xl px-4 py-3 items-center gap-2.5 shadow-xl z-20" style="animation-delay: 1.4s;">
               <i class="fa-solid fa-gift text-emerald-400"></i>
               <span class="text-xs font-bold">Accesorios de regalo</span>
             </div>
