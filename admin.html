@@ -83,6 +83,56 @@
 
     <main class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
 
+      <!-- CARGA RÁPIDA + CSV -->
+      <section class="mb-6 bg-white/5 p-5 rounded-2xl border border-blue-500/30">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-bolt mr-1"></i> Carga rápida de stock</h3>
+          <div class="flex gap-2">
+            <button type="button" onclick="descargarPlantillaCSV()" class="text-xs font-bold px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 transition"><i class="fa-solid fa-download mr-1"></i>Plantilla CSV</button>
+            <label class="text-xs font-bold px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition cursor-pointer">
+              <i class="fa-solid fa-file-csv mr-1"></i>Importar CSV
+              <input type="file" accept=".csv,text/csv" class="hidden" onchange="leerCSV(event)">
+            </label>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mt-3">
+          <input id="qa-nombre" placeholder="Modelo (Ej. iPhone 15 Pro)" class="col-span-2 rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+          <input id="qa-specs" placeholder="256GB · Natural · A+" class="col-span-2 rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+          <input id="qa-precio" inputmode="decimal" placeholder="Precio USD" class="rounded-xl p-3 bg-white/10 border border-emerald-500/40 outline-none text-sm">
+          <input id="qa-costo" inputmode="decimal" placeholder="Costo USD" class="rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+          <select id="qa-condicion" class="rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-sm">
+            <option value="Como Nuevo">Usado</option><option value="Nuevo">Sellado</option><option value="Open Box">Open Box</option>
+          </select>
+          <select id="qa-estado" class="rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-sm">
+            <option value="En Stock">En stock</option><option value="Sin stock">Sin stock</option><option value="A pedido">A pedido</option>
+          </select>
+          <input id="qa-unidades" type="number" min="0" value="1" title="Unidades" class="rounded-xl p-3 bg-white/10 border border-white/10 outline-none text-sm">
+          <select id="qa-modelo" class="col-span-2 rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-xs"></select>
+          <div id="qa-img-info" class="col-span-2 flex items-center gap-2 text-[11px] text-slate-400"></div>
+          <button type="button" onclick="agregarRapido()" class="md:col-start-6 col-span-2 md:col-span-1 bg-blue-600 hover:bg-blue-500 rounded-xl font-extrabold text-sm py-3">Agregar</button>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2">La imagen se elige sola según modelo y color del catálogo; podés cambiarla antes de agregar. Para fotos reales o IMEI, usá el formulario de abajo (o el botón de duplicar en la tabla).</p>
+
+        <div id="import-preview" class="hidden mt-5 border-t border-white/10 pt-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h4 id="imp-titulo" class="font-bold text-sm"></h4>
+            <label class="text-xs text-slate-300 flex items-center gap-2"><input id="imp-solo-problemas" type="checkbox" onchange="renderPreviewImport()"> Mostrar solo filas con imagen a revisar</label>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-white/10">
+            <table class="w-full text-left text-xs" style="min-width:720px">
+              <thead class="bg-white/5 text-slate-400 font-bold uppercase"><tr>
+                <th class="p-2"></th><th class="p-2">Producto</th><th class="p-2">Estado</th><th class="p-2">Unid.</th><th class="p-2">USD</th><th class="p-2">Imagen (chequeo)</th><th class="p-2">Acción</th>
+              </tr></thead>
+              <tbody id="imp-body" class="divide-y divide-white/5"></tbody>
+            </table>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <button type="button" id="imp-confirmar" onclick="confirmarImport()" class="bg-emerald-600 hover:bg-emerald-500 px-5 py-3 rounded-xl font-extrabold text-sm"></button>
+            <button type="button" onclick="cancelarImport()" class="bg-slate-700 hover:bg-slate-600 px-4 py-3 rounded-xl text-xs font-bold">Cancelar</button>
+          </div>
+        </div>
+      </section>
+
       <form onsubmit="saveProduct(event)" class="grid md:grid-cols-3 gap-6">
         <input type="hidden" id="p-id" value="">
 
@@ -122,6 +172,7 @@
                 <select id="p-disponibilidad" class="w-full rounded-xl p-3 bg-slate-800 border border-white/10 outline-none text-sm">
                   <option value="En Stock">En Stock</option>
                   <option value="A pedido">A Pedido</option>
+                  <option value="Sin stock">Sin stock</option>
                 </select>
               </div>
               <div>
@@ -258,6 +309,7 @@
                 <th class="p-3">Detalle</th>
                 <th class="p-3">IMEI</th>
                 <th class="p-3">Unidades</th>
+                <th class="p-3">Estado</th>
                 <th class="p-3">Precio USD</th>
                 <th class="p-3">Galería real</th>
                 <th class="p-3 text-right">Acciones</th>
@@ -333,7 +385,7 @@
       } else {
         el.className = 'text-[11px] font-bold px-2.5 py-2 rounded-lg whitespace-nowrap bg-red-500/15 text-red-400 cursor-help';
         el.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i>Sin conexión con la nube';
-        el.title = detail || 'Los cambios no se están guardando en la nube: revisá JSONBIN_BIN_ID y JSONBIN_KEY en Netlify (Site settings → Environment variables) y volvé a desplegar.';
+        el.title = detail || 'Los cambios no se están guardando en la nube: revisá JSONBIN_BIN_ID y JSONBIN_KEY en Vercel (Project Settings → Environment Variables) y volvé a desplegar.';
       }
     }
 
@@ -370,6 +422,7 @@
       selector.innerHTML = '<option value="">Elegir modelo del catálogo...</option>' +
         Object.keys(CATALOGO_MODELOS).map(nombre => `<option value="${escapeHTML(nombre)}">${escapeHTML(nombre)}</option>`).join('');
 
+      initCargaRapida();
       await obtenerDolarBlueRosario();
       await cargarProductosRemotos();
       calcularPrecioAdmin();
@@ -594,17 +647,23 @@
           <td class="p-3 text-slate-400">${escapeHTML(prod.specs)}</td>
           <td class="p-3 text-slate-400">${prod.imei ? `...${escapeHTML(prod.imei)}` : '—'}</td>
           <td class="p-3 font-bold">${prod.stock}</td>
+          <td class="p-3">
+            <select onchange="cambiarEstado(${prod.id}, this.value)" class="bg-slate-800 border rounded-lg p-1.5 text-[11px] font-bold ${ESTADO_CLASE[estadoAdmin(prod)]}">
+              ${['En Stock','Sin stock','A pedido'].map(e => `<option value="${e}" ${e === estadoAdmin(prod) ? 'selected' : ''}>${e}</option>`).join('')}
+            </select>
+          </td>
           <td class="p-3 font-bold text-emerald-400">
             $${moneyUSD(prod.precioDirectoUSD)}
             ${Number(prod.precioOriginalUSD) > Number(prod.precioDirectoUSD) ? `<span class="block text-[10px] text-slate-500 line-through font-normal">$${moneyUSD(prod.precioOriginalUSD)}</span>` : ''}
           </td>
           <td class="p-3 text-slate-400">${prod.galeria && prod.galeria.length ? `<i class="fa-solid fa-images text-emerald-400 mr-1"></i>${prod.galeria.length}` : '—'}</td>
           <td class="p-3 text-right space-x-2">
+            <button type="button" onclick="duplicarProducto(${prod.id})" title="Duplicar (copia para cargar otra unidad)" class="text-slate-400"><i class="fa-regular fa-copy"></i></button>
             <button type="button" onclick="editProduct(${prod.id})" class="text-blue-400"><i class="fa-solid fa-pen"></i></button>
             <button type="button" onclick="deleteProduct(${prod.id})" class="text-red-400"><i class="fa-solid fa-trash"></i></button>
           </td>
         </tr>
-      `).join('') || '<tr><td colspan="7" class="p-6 text-center text-slate-500">Todavía no cargaste productos.</td></tr>';
+      `).join('') || '<tr><td colspan="8" class="p-6 text-center text-slate-500">Todavía no cargaste productos.</td></tr>';
     }
 
     function editProduct(id) {
@@ -680,6 +739,8 @@
         galeria: currentGaleriaReal.length ? [...currentGaleriaReal] : []
       };
 
+      if (productData.disponibilidad === 'Sin stock') productData.stock = 0;
+
       if (existingId) {
         const index = productos.findIndex(p => p.id === Number(existingId));
         if (index !== -1) productos[index] = productData;
@@ -693,6 +754,315 @@
       if (resultadoNube) {
         showToast('Guardado con éxito ✅ (ya está visible en la web)');
       }
+    }
+  
+    // ============================================================
+    // ESTADO (En Stock | Sin stock | A pedido) + CARGA RÁPIDA + CSV
+    // ============================================================
+    const ESTADO_CLASE = { 'En Stock': 'border-emerald-500/40 text-emerald-300', 'Sin stock': 'border-red-500/40 text-red-300', 'A pedido': 'border-amber-500/40 text-amber-300' };
+    function estadoAdmin(p) {
+      if (p.disponibilidad === 'Sin stock') return 'Sin stock';
+      if (p.disponibilidad === 'A pedido') return 'A pedido';
+      return Number(p.stock) > 0 ? 'En Stock' : 'Sin stock';
+    }
+    async function cambiarEstado(id, estado) {
+      const p = productos.find(x => x.id === id);
+      if (!p) return;
+      p.disponibilidad = estado;
+      if (estado === 'Sin stock') p.stock = 0;
+      else if (Number(p.stock) <= 0) p.stock = 1;
+      const r = await guardarProductosRemotos();
+      renderAdminTable();
+      if (r) showToast(`${p.nombre}: ${estado} ✅`);
+    }
+    function duplicarProducto(id) {
+      editProduct(id);
+      document.getElementById('p-id').value = '';
+      document.getElementById('p-imei').value = '';
+      currentGaleriaReal = [];
+      renderGaleriaReal();
+      document.getElementById('btn-save-admin').textContent = 'Guardar Producto';
+      showToast('Copia lista: cambiá lo que difiere (IMEI, color) y guardá');
+    }
+
+    // ---------- helpers ----------
+    const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+    const gv = id => document.getElementById(id).value.trim();
+    function num(v) {
+      v = String(v || '').replace(/[^\d.,-]/g, '');
+      if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, '');          // 1.200 -> 1200
+      else if (v.includes(',') && v.includes('.')) v = v.replace(/\./g, '').replace(',', '.');
+      else v = v.replace(',', '.');
+      return Number(v) || 0;
+    }
+    function inferirCategoria(n) {
+      n = norm(n);
+      if (/airpods/.test(n)) return 'airpods';
+      if (/watch/.test(n)) return 'watch';
+      if (/funda|cable|cargador|fuente|vidrio|accesorio/.test(n)) return 'accesorios';
+      return 'iphone';
+    }
+    function normalizarEstado(v) {
+      const n = norm(v);
+      if (!n) return null;
+      if (/sin|agot|no hay/.test(n)) return 'Sin stock';
+      if (/pedido|encargo/.test(n)) return 'A pedido';
+      if (/stock|dispon/.test(n)) return 'En Stock';
+      return null;
+    }
+    function normalizarCondicion(v) {
+      const n = norm(v);
+      if (/sell|nuevo|new/.test(n) && !/como/.test(n)) return 'Nuevo';
+      if (/open/.test(n)) return 'Open Box';
+      return 'Como Nuevo';
+    }
+
+    // ---------- imágenes: sugerencia automática + chequeo ----------
+    function sugerirImagen(nombre, specs) {
+      const n = norm(nombre), sp = norm(specs);
+      let primera = null, parcial = null;
+      for (const [k, ruta] of Object.entries(CATALOGO_MODELOS)) {
+        if (norm(k) === n || norm(k.replace(/^accesorio:\s*/i, '')) === n) return { ruta, estado: 'ok' };
+        const m = k.match(/^(.*?)\s*(?:\((.*)\))?$/);
+        if (norm(m[1].replace(/^accesorio:\s*/i, '')) !== n) continue;
+        const color = norm(m[2] || '');
+        if (color && sp.includes(color)) return { ruta, estado: 'ok' };
+        if (!primera) primera = ruta;
+        if (!parcial && color && color.split(' ').some(w => w.length > 3 && sp.includes(w))) parcial = ruta;
+      }
+      const r = parcial || primera;
+      return r ? { ruta: r, estado: 'revisar' } : { ruta: '', estado: 'sin' };
+    }
+    function probarImagen(src) {
+      return new Promise(res => {
+        if (!src) return res(false);
+        const i = new Image();
+        i.onload = () => res(true); i.onerror = () => res(false);
+        i.src = src;
+      });
+    }
+    const CHIP = {
+      ok: ['Imagen OK', 'bg-emerald-500/15 text-emerald-300'],
+      revisar: ['Revisar color', 'bg-amber-500/15 text-amber-300'],
+      sin: ['Sin imagen', 'bg-red-500/15 text-red-300'],
+      roto: ['No carga', 'bg-red-500/15 text-red-300']
+    };
+
+    // ---------- producto desde datos simples ----------
+    function armarProducto(d) {
+      const estado = d.estado || 'En Stock';
+      let u = parseInt(d.unidades, 10);
+      if (isNaN(u)) u = 1;
+      if (estado === 'Sin stock') u = 0; else if (u <= 0) u = 1;
+      return {
+        id: 0, nombre: d.nombre, categoria: d.categoria || inferirCategoria(d.nombre),
+        condicion: d.condicion || 'Como Nuevo', disponibilidad: estado,
+        costoBaseUSD: d.costo || 0, precioDirectoUSD: d.precio,
+        precioOriginalUSD: d.precioOriginal > d.precio ? d.precioOriginal : null,
+        tipoCotizacion: d.cotizacion || 'blue', bateria: d.bateria || 'N/A', stock: u,
+        specs: d.specs || '', imei: d.imei || null, garantia: d.garantia || null,
+        imagenes: d.imagen ? [d.imagen] : [], galeria: []
+      };
+    }
+    const claveProd = p => norm(p.nombre) + '|' + norm(p.specs) + '|' + (p.imei || '');
+    // Si ya existe (mismo modelo + detalle + IMEI) lo ACTUALIZA, conservando su galería real; si no, lo agrega.
+    async function commitProductos(lista) {
+      let nuevos = 0, act = 0;
+      lista.forEach((p, i) => {
+        const idx = productos.findIndex(x => claveProd(x) === claveProd(p));
+        if (idx >= 0) {
+          const old = productos[idx];
+          productos[idx] = { ...p, id: old.id, galeria: old.galeria || [], imagenes: p.imagenes.length ? p.imagenes : (old.imagenes || []), garantia: p.garantia || old.garantia || null };
+          act++;
+        } else { p.id = Date.now() + i; productos.push(p); nuevos++; }
+      });
+      const ok = await guardarProductosRemotos();
+      renderAdminTable();
+      return { nuevos, act, ok: !!ok };
+    }
+
+    // ---------- carga rápida (1 equipo) ----------
+    function initCargaRapida() {
+      document.getElementById('qa-modelo').innerHTML = '<option value="">Imagen: automática (modelo + color)</option><option value="__none">Sin imagen</option>' +
+        Object.keys(CATALOGO_MODELOS).map(n => `<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join('');
+      ['qa-nombre', 'qa-specs'].forEach(id => document.getElementById(id).addEventListener('input', actualizarSugerenciaQA));
+      document.getElementById('qa-modelo').addEventListener('change', actualizarSugerenciaQA);
+      actualizarSugerenciaQA();
+    }
+    function imagenQA() {
+      const m = gv('qa-modelo');
+      if (m === '__none') return { ruta: '', estado: 'sin' };
+      if (m) return { ruta: CATALOGO_MODELOS[m], estado: 'ok' };
+      return sugerirImagen(gv('qa-nombre'), gv('qa-specs'));
+    }
+    function actualizarSugerenciaQA() {
+      const s = imagenQA(), [txt, cls] = CHIP[s.estado];
+      document.getElementById('qa-img-info').innerHTML =
+        (s.ruta ? `<img src="${escapeHTML(s.ruta)}" class="w-10 h-10 object-cover rounded-lg bg-slate-800">` : '') +
+        `<span class="px-2 py-1 rounded-full font-bold ${cls}">${txt}</span>`;
+    }
+    async function agregarRapido() {
+      const nombre = gv('qa-nombre'), precio = num(gv('qa-precio'));
+      if (!nombre || !precio) { showToast('Falta el modelo o el precio'); return; }
+      const img = imagenQA();
+      if (img.estado === 'sin' && !confirm('No hay imagen para este modelo. ¿Agregarlo igual sin imagen?')) return;
+      const prod = armarProducto({
+        nombre, specs: gv('qa-specs'), precio, costo: num(gv('qa-costo')), estado: gv('qa-estado'),
+        unidades: gv('qa-unidades'), condicion: gv('qa-condicion'), imagen: img.ruta
+      });
+      const r = await commitProductos([prod]);
+      if (r.ok) showToast(r.act ? 'Actualizado ✅' : 'Agregado ✅ (ya está en la web)');
+      ['qa-nombre', 'qa-specs', 'qa-precio'].forEach(id => document.getElementById(id).value = '');
+      actualizarSugerenciaQA();
+      document.getElementById('qa-nombre').focus();
+    }
+
+    // ---------- CSV ----------
+    const COLS_CSV = ['nombre', 'categoria', 'condicion', 'estado', 'unidades', 'bateria', 'specs', 'imei', 'garantia', 'costo', 'precio', 'precio_original', 'cotizacion', 'imagen'];
+    const ALIAS = {
+      nombre: ['nombre', 'modelo', 'producto'], categoria: ['categoria'], condicion: ['condicion'],
+      estado: ['estado', 'disponibilidad'], unidades: ['unidades', 'stock', 'cantidad'], bateria: ['bateria'],
+      specs: ['specs', 'detalle', 'detalles', 'especificaciones', 'descripcion'], imei: ['imei'], garantia: ['garantia'],
+      costo: ['costo', 'costo usd', 'costo base'], precio: ['precio', 'precio usd', 'precio venta', 'precio directo'],
+      precioOriginal: ['precio original', 'precio anterior'], cotizacion: ['cotizacion'], imagen: ['imagen', 'foto', 'imagen url']
+    };
+    function descargarPlantillaCSV() {
+      const filas = [
+        COLS_CSV.join(';'),
+        'iPhone 15 Pro;iphone;usado;En Stock;2;92%;256GB · Natural · Estética A+;6854;;700;820;;blue;',
+        'iPhone 13;iphone;sellado;Sin stock;0;100%;128GB · Azul;;;480;520;560;blue;',
+        'AirPods Pro (2da Generación);airpods;sellado;A pedido;1;N/A;Con estuche MagSafe;;;120;170;;blue;'
+      ];
+      const url = URL.createObjectURL(new Blob(['\uFEFF' + filas.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = 'plantilla-stock-matos.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function parseCSV(text) {
+      text = text.replace(/^\uFEFF/, '');
+      const l1 = text.split(/\r?\n/)[0];
+      const d = (l1.match(/;/g) || []).length > (l1.match(/,/g) || []).length ? ';' : ',';
+      const rows = []; let row = [], cur = '', q = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (q) { if (c === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+        else if (c === '"') q = true;
+        else if (c === d) { row.push(cur); cur = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(cur); cur = '';
+          if (row.some(x => x.trim())) rows.push(row);
+          row = [];
+        } else cur += c;
+      }
+      row.push(cur);
+      if (row.some(x => x.trim())) rows.push(row);
+      return rows;
+    }
+
+    let importFilas = [];
+    function leerCSV(ev) {
+      const f = ev.target.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        let t;
+        try { t = new TextDecoder('utf-8', { fatal: true }).decode(rd.result); }
+        catch { t = new TextDecoder('windows-1252').decode(rd.result); }   // CSV viejo de Excel
+        procesarCSV(t);
+      };
+      rd.readAsArrayBuffer(f);
+      ev.target.value = '';
+    }
+    async function procesarCSV(text) {
+      const rows = parseCSV(text);
+      if (rows.length < 2) { showToast('El CSV está vacío'); return; }
+      const heads = rows[0].map(h => norm(h).replace(/_/g, ' '));
+      const col = {};
+      for (const [k, al] of Object.entries(ALIAS)) { const i = heads.findIndex(h => al.includes(h)); if (i >= 0) col[k] = i; }
+      if (col.nombre === undefined || col.precio === undefined) {
+        alert('El CSV necesita como mínimo las columnas "nombre" y "precio". Descargá la plantilla para ver el formato.');
+        return;
+      }
+      const get = (r, k) => col[k] === undefined ? '' : String(r[col[k]] || '').trim();
+      showToast('Chequeando imágenes...');
+
+      importFilas = await Promise.all(rows.slice(1).map(async r => {
+        let estado = normalizarEstado(get(r, 'estado')), unidades = get(r, 'unidades');
+        if (unidades && isNaN(Number(unidades))) { estado = estado || normalizarEstado(unidades); unidades = ''; }  // columna "stock" con texto
+        const nombre = get(r, 'nombre'), specs = get(r, 'specs'), precio = num(get(r, 'precio'));
+        let img = get(r, 'imagen'), est;
+        if (img) {
+          const k = Object.keys(CATALOGO_MODELOS).find(n => norm(n) === norm(img));
+          if (k) img = CATALOGO_MODELOS[k];
+          est = 'ok';
+        } else { const s = sugerirImagen(nombre, specs); img = s.ruta; est = s.estado; }
+        if (img && !(await probarImagen(img))) est = 'roto';
+
+        const cat = norm(get(r, 'categoria'));
+        const cot = norm(get(r, 'cotizacion'));
+        const prod = armarProducto({
+          nombre, specs, precio, costo: num(get(r, 'costo')), precioOriginal: num(get(r, 'precioOriginal')),
+          estado, unidades, bateria: get(r, 'bateria'), imei: get(r, 'imei'), garantia: get(r, 'garantia'),
+          categoria: ['iphone', 'watch', 'airpods', 'accesorios'].includes(cat) ? cat : '',
+          condicion: normalizarCondicion(get(r, 'condicion')),
+          cotizacion: /ofic/.test(cot) ? 'oficial' : /tarj/.test(cot) ? 'tarjeta' : 'blue',
+          imagen: img
+        });
+        const error = !nombre ? 'Falta nombre' : !precio ? 'Falta precio' : '';
+        return { prod, imgEstado: est, error, incluir: !error, existe: productos.some(x => claveProd(x) === claveProd(prod)) };
+      }));
+      document.getElementById('imp-solo-problemas').checked = importFilas.some(f => f.imgEstado !== 'ok');
+      document.getElementById('import-preview').classList.remove('hidden');
+      renderPreviewImport();
+    }
+    function renderPreviewImport() {
+      const solo = document.getElementById('imp-solo-problemas').checked;
+      const opts = '<option value="">Cambiar imagen...</option><option value="__none">Sin imagen</option>' +
+        Object.keys(CATALOGO_MODELOS).map(n => `<option value="${escapeHTML(n)}">${escapeHTML(n)}</option>`).join('');
+      const prob = importFilas.filter(f => f.imgEstado !== 'ok').length;
+      document.getElementById('imp-titulo').innerHTML =
+        `${importFilas.length} filas leídas · <span class="${prob ? 'text-amber-300' : 'text-emerald-300'}">${prob} con imagen a revisar</span>`;
+      document.getElementById('imp-body').innerHTML = importFilas.map((f, i) => ({ f, i }))
+        .filter(({ f }) => !solo || f.imgEstado !== 'ok' || f.error)
+        .map(({ f, i }) => {
+          const p = f.prod, [txt, cls] = CHIP[f.imgEstado];
+          return `<tr class="${f.error ? 'opacity-50' : ''}">
+            <td class="p-2"><input type="checkbox" ${f.incluir ? 'checked' : ''} ${f.error ? 'disabled' : ''} onchange="importFilas[${i}].incluir=this.checked; actualizarBotonImport()"></td>
+            <td class="p-2"><b>${escapeHTML(p.nombre) || '—'}</b><div class="text-slate-400">${escapeHTML(p.specs)}</div>${f.error ? `<div class="text-red-400 font-bold">${f.error}</div>` : ''}</td>
+            <td class="p-2 font-bold ${ESTADO_CLASE[p.disponibilidad].split(' ')[1]}">${p.disponibilidad}</td>
+            <td class="p-2">${p.stock}</td>
+            <td class="p-2 font-bold">${p.precioDirectoUSD ? '$' + moneyUSD(p.precioDirectoUSD) : '—'}</td>
+            <td class="p-2"><div class="flex items-center gap-2">
+              ${p.imagenes[0] ? `<img src="${escapeHTML(p.imagenes[0])}" class="w-10 h-10 object-cover rounded-lg bg-slate-800">` : '<div class="w-10 h-10 rounded-lg bg-slate-800"></div>'}
+              <div><span class="px-2 py-0.5 rounded-full font-bold ${cls}">${txt}</span>
+              <select onchange="cambiarImagenFila(${i}, this.value)" class="block mt-1 bg-slate-800 border border-white/10 rounded p-1 text-[10px] max-w-[160px]">${opts}</select></div>
+            </div></td>
+            <td class="p-2 ${f.existe ? 'text-amber-300' : 'text-emerald-300'} font-bold">${f.existe ? 'Actualiza' : 'Nuevo'}</td>
+          </tr>`;
+        }).join('');
+      actualizarBotonImport();
+    }
+    function actualizarBotonImport() {
+      const n = importFilas.filter(f => f.incluir).length;
+      const b = document.getElementById('imp-confirmar');
+      b.textContent = `Importar ${n} producto${n === 1 ? '' : 's'}`;
+      b.disabled = !n; b.classList.toggle('opacity-50', !n);
+    }
+    function cambiarImagenFila(i, v) {
+      if (!v) return;
+      const f = importFilas[i], ruta = v === '__none' ? '' : CATALOGO_MODELOS[v];
+      f.prod.imagenes = ruta ? [ruta] : [];
+      probarImagen(ruta).then(ok => { f.imgEstado = ruta ? (ok ? 'ok' : 'roto') : 'sin'; renderPreviewImport(); });
+    }
+    function cancelarImport() { importFilas = []; document.getElementById('import-preview').classList.add('hidden'); }
+    async function confirmarImport() {
+      const sel = importFilas.filter(f => f.incluir);
+      const sinImg = sel.filter(f => f.imgEstado === 'sin' || f.imgEstado === 'roto').length;
+      if (sinImg && !confirm(`${sinImg} producto(s) quedan sin imagen válida y se verán sin foto en la web. ¿Importar igual?`)) return;
+      const r = await commitProductos(sel.map(f => f.prod));
+      if (r.ok) showToast(`Importado ✅ ${r.nuevos} nuevos, ${r.act} actualizados`);
+      cancelarImport();
     }
   </script>
 </body>

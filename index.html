@@ -441,6 +441,7 @@
           <option value="todas">Todos los stocks</option>
           <option value="En Stock">En Stock</option>
           <option value="A pedido">A Pedido</option>
+          <option value="Sin stock">Sin stock</option>
         </select>
 
         <select id="condition-select" onchange="applyFilters()" class="px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -868,6 +869,13 @@
       });
     }
 
+    // Estado real del producto: En Stock | A pedido | Sin stock
+    function estadoDisp(p) {
+      if (p.disponibilidad === 'Sin stock') return 'Sin stock';
+      if (p.disponibilidad === 'A pedido') return 'A pedido';
+      return Number(p.stock) > 0 ? 'En Stock' : 'Sin stock';
+    }
+
     // Todo el filtrado MENOS el de línea/generación (sirve de base para calcular las pestañas)
     function getCategoryFilteredProducts() {
       const text = document.getElementById('search-input').value.trim().toLowerCase();
@@ -878,11 +886,11 @@
         const searchable = `${producto.nombre} ${producto.specs} ${producto.categoria} ${producto.bateria}`.toLowerCase();
         const categoryOK = categoriaActual === 'todos' || producto.categoria === categoriaActual;
         const conditionOK = condition === 'todas' || producto.condicion === condition;
-        const dispOK = disp === 'todas' || (producto.disponibilidad || 'En Stock') === disp;
+        const dispOK = disp === 'todas' || estadoDisp(producto) === disp;
         const textOK = !text || searchable.includes(text);
 
-        return categoryOK && conditionOK && dispOK && textOK && Number(producto.stock) > 0;
-      });
+        return categoryOK && conditionOK && dispOK && textOK;
+      }).sort((a, b) => (estadoDisp(a) === 'Sin stock') - (estadoDisp(b) === 'Sin stock')); // los sin stock van al final
     }
 
     function getFilteredProducts() {
@@ -966,6 +974,8 @@
         const mainImage = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : null;
         const tieneGaleriaReal = prod.galeria && prod.galeria.length > 0;
         const rebaja = tieneRebaja(prod);
+        const sinStock = estadoDisp(prod) === 'Sin stock';
+        const aPedido = estadoDisp(prod) === 'A pedido';
 
         const conditionLabel = prod.condicion === 'Nuevo' ? 'SELLADO' : prod.condicion === 'Open Box' ? 'OPEN BOX' : 'USADO';
 
@@ -976,7 +986,7 @@
                 <!-- INTEGRACIÓN DE LA ESTRUCTURA HTML REQUERIDA CON .imagen-equipo -->
                 <div class="imagen-equipo relative h-64 bg-slate-100 overflow-hidden flex items-center justify-center">
                   ${mainImage ? `
-                    <img src="${escapeHTML(mainImage)}" alt="${escapeHTML(prod.nombre)}" class="product-image w-full h-full object-cover">
+                    <img src="${escapeHTML(mainImage)}" alt="${escapeHTML(prod.nombre)}" class="product-image w-full h-full object-cover ${sinStock ? 'grayscale opacity-60' : ''}">
                   ` : `
                     <div class="text-slate-400 font-bold text-lg p-6 text-center">${escapeHTML(prod.nombre)}<br><span class="text-xs text-slate-500 font-normal">${escapeHTML(prod.specs)}</span></div>
                   `}
@@ -984,6 +994,8 @@
                     <span class="bg-matos text-white text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
                       ${conditionLabel}
                     </span>
+                    ${sinStock ? '<span class="bg-slate-700 text-white text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">Sin stock</span>' : ''}
+                    ${aPedido ? '<span class="bg-amber-500 text-white text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">A pedido</span>' : ''}
                     ${rebaja ? `
                       <span class="bg-red-600 text-white text-[10px] uppercase font-extrabold px-3 py-1 rounded-full">
                         Rebajado
@@ -1009,7 +1021,7 @@
                     <p class="text-[10px] uppercase tracking-[.15em] font-extrabold text-blue-600">${escapeHTML(prod.categoria)}</p>
                     <h3 class="font-heading text-xl font-black mt-1">${escapeHTML(prod.nombre)}</h3>
                   </div>
-                  <span class="text-xs text-slate-400 font-bold whitespace-nowrap">${prod.stock} disp.</span>
+                  <span class="text-xs text-slate-400 font-bold whitespace-nowrap">${sinStock ? 'Sin stock' : aPedido ? 'A pedido' : prod.stock + ' disp.'}</span>
                 </div>
                 <p class="text-sm text-slate-500 mt-2 line-clamp-2">${escapeHTML(prod.specs)}</p>
 
@@ -1039,7 +1051,7 @@
                   <button onclick="event.stopPropagation(); consultarProductoWhatsApp(${prod.id})" title="Consultar por WhatsApp" class="w-11 h-11 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition flex items-center justify-center">
                     <i class="fa-brands fa-whatsapp"></i>
                   </button>
-                  <button onclick="event.stopPropagation(); addToCart(${prod.id})" class="w-11 h-11 rounded-xl bg-matos text-white hover:bg-blue-700 transition flex items-center justify-center">
+                  <button ${sinStock ? 'disabled title="Sin stock"' : ''} onclick="event.stopPropagation(); addToCart(${prod.id})" class="w-11 h-11 rounded-xl bg-matos text-white ${sinStock ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-700'} transition flex items-center justify-center">
                     <i class="fa-solid fa-plus"></i>
                   </button>
                 </div>
@@ -1131,8 +1143,8 @@
               <p class="text-sm text-slate-500 mt-1">≈ $${moneyARS(calculo.precioFinalARS)} ARS de referencia</p>
             </div>
             <div class="mt-7 grid sm:grid-cols-2 gap-2">
-              <button onclick="addToCart(${prod.id}); closeProductModal()" class="bg-matos hover:bg-blue-700 text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center">
-                <i class="fa-solid fa-bag-shopping mr-2"></i>Agregar al carrito
+              <button ${estadoDisp(prod) === 'Sin stock' ? 'disabled' : ''} onclick="addToCart(${prod.id}); closeProductModal()" class="bg-matos ${estadoDisp(prod) === 'Sin stock' ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-700'} text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center">
+                <i class="fa-solid fa-bag-shopping mr-2"></i>${estadoDisp(prod) === 'Sin stock' ? 'Sin stock' : 'Agregar al carrito'}
               </button>
               <button onclick="consultarProductoWhatsApp(${prod.id})" class="bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center">
                 <i class="fa-brands fa-whatsapp mr-2"></i>Consultar por WhatsApp
@@ -1162,7 +1174,7 @@
 
     function addToCart(id) {
       const prod = productos.find(p => p.id === id);
-      if (!prod || Number(prod.stock) <= 0) return;
+      if (!prod || estadoDisp(prod) === 'Sin stock') return;
       const item = carrito.find(p => p.id === id);
       if (item) item.cantidad++;
       else carrito.push({ id: prod.id, cantidad: 1 });
