@@ -7,6 +7,8 @@
 // Environment Variables): JSONBIN_BIN_ID y JSONBIN_KEY
 // ============================================================
 
+const { rechazar } = require('./_auth');
+
 module.exports = async (req, res) => {
   const BIN_ID = process.env.JSONBIN_BIN_ID;
   const API_KEY = process.env.JSONBIN_KEY;
@@ -42,8 +44,9 @@ module.exports = async (req, res) => {
       return res.status(200).json(recordData);
     }
 
-    // GUARDAR DATOS (PUT)
+    // GUARDAR DATOS (PUT) — requiere contraseña si ADMIN_PASSWORD está configurada en Vercel
     if (req.method === 'PUT') {
+      if (rechazar(req, res, false)) return;
       const bodyData = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const response = await fetch(URL, {
         method: 'PUT',

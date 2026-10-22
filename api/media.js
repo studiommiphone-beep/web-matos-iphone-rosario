@@ -16,12 +16,16 @@
 // ============================================================
 
 const { put, del } = require('@vercel/blob');
+const { rechazar } = require('./_auth');
 
 // Límite práctico: mantenemos el mismo límite que usábamos en Netlify
 const MAX_SIZE_BYTES = 6 * 1024 * 1024;
 
 module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
+
+  // Subir/borrar archivos requiere contraseña si ADMIN_PASSWORD está configurada en Vercel
+  if (rechazar(req, res, false)) return;
 
   try {
     if (req.method === 'POST') {
