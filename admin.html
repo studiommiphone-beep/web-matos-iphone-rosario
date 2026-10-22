@@ -33,6 +33,11 @@
     .toast { transform: translateY(130px); opacity: 0; pointer-events: none; transition: .3s ease; }
     .toast.show { transform: translateY(0); opacity: 1; }
 
+    .tab-btn { padding: .65rem 1rem; font-size: .8rem; font-weight: 700; color: #94a3b8; border-bottom: 2px solid transparent; white-space: nowrap; transition: .2s; }
+    .tab-btn:hover { color: #e2e8f0; }
+    .tab-btn.active { color: #fff; border-bottom-color: #3b82f6; }
+    .tab-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: -2px; }
+
     /* Evita que iOS Safari haga zoom automático al tocar un input/select */
     @media (max-width: 767px) {
       input, select, textarea { font-size: 16px !important; }
@@ -57,7 +62,7 @@
           Ingresar
         </button>
       </form>
-      <p id="login-error" class="hidden text-red-400 text-xs mt-3 font-bold">Contraseña incorrecta.</p>
+      <p id="login-error" class="hidden text-red-400 text-xs mt-3 font-bold" role="alert">Contraseña incorrecta.</p>
       <a href="index.html" class="inline-block mt-6 text-slate-500 hover:text-slate-300 text-xs">← Volver al sitio</a>
     </div>
   </div>
@@ -69,7 +74,7 @@
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
           <img src="Logo.png" alt="Matos" class="h-7 sm:h-9 w-auto object-contain shrink-0">
           <div class="min-w-0">
-            <p class="hidden sm:block text-[10px] uppercase tracking-widest text-blue-400 font-bold truncate">Gestión de Inventario, Precios y Galería</p>
+            <p class="hidden sm:block text-[10px] uppercase tracking-widest text-blue-400 font-bold truncate">Inventario, Ventas y Cobranzas</p>
             <h1 class="font-heading text-sm sm:text-lg font-black leading-tight truncate">Panel de Administración</h1>
           </div>
         </div>
@@ -79,9 +84,17 @@
           <button onclick="cerrarSesion()" class="text-xs font-bold px-2.5 sm:px-3 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 transition whitespace-nowrap">Salir</button>
         </div>
       </div>
+      <nav id="tabs-nav" class="max-w-6xl mx-auto px-2 sm:px-3 flex overflow-x-auto" aria-label="Secciones del panel">
+        <button type="button" data-tab="catalogo" onclick="VP.tab('catalogo')" class="tab-btn active"><i class="fa-solid fa-boxes-stacked mr-1.5"></i>Catálogo</button>
+        <button type="button" data-tab="ventas" onclick="VP.tab('ventas')" class="tab-btn"><i class="fa-solid fa-cash-register mr-1.5"></i>Ventas</button>
+        <button type="button" data-tab="financiados" onclick="VP.tab('financiados')" class="tab-btn"><i class="fa-solid fa-hourglass-half mr-1.5"></i>A pagar</button>
+        <button type="button" data-tab="proveedores" onclick="VP.tab('proveedores')" class="tab-btn"><i class="fa-solid fa-truck-field mr-1.5"></i>Proveedores</button>
+      </nav>
     </header>
 
     <main class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+
+      <div id="tab-catalogo">
 
       <!-- CARGA RÁPIDA + CSV -->
       <section class="mb-6 bg-white/5 p-5 rounded-2xl border border-blue-500/30">
@@ -319,6 +332,11 @@
           </table>
         </div>
       </div>
+      </div><!-- /tab-catalogo -->
+
+      <div id="tab-ventas" class="hidden"></div>
+      <div id="tab-financiados" class="hidden"></div>
+      <div id="tab-proveedores" class="hidden"></div>
     </main>
   </div>
 
@@ -327,6 +345,7 @@
     Listo
   </div>
 
+  <script src="ventas-panel.js"></script>
   <script>
     // ============================================================
     // CATÁLOGO DE IMÁGENES PRINCIPALES (generadas por IA)
@@ -370,6 +389,9 @@
     let dolarBlueRosario = CONFIG.dolarInicial;
     const ACCESORIOS_REGALO_COSTO = 10;
 
+    // Cabeceras con la contraseña del admin (el servidor la valida contra ADMIN_PASSWORD)
+    const authHeaders = () => ({ 'Content-Type': 'application/json', 'x-admin-password': sessionStorage.getItem('matos_admin_pw') || '' });
+
     let productos = [];
     let currentTempImages = [];
     let currentGaleriaReal = []; // [{url, tipo, nombre}]
@@ -390,19 +412,34 @@
     }
 
     // ---------- LOGIN ----------
-    function intentarLogin(event) {
+    async function intentarLogin(event) {
       event.preventDefault();
       const pass = document.getElementById('login-password').value;
-      if (pass === ADMIN_PASSWORD) {
-        sessionStorage.setItem('matos_admin_auth', '1');
-        mostrarDashboard();
-      } else {
-        document.getElementById('login-error').classList.remove('hidden');
+      const err = document.getElementById('login-error');
+      const btn = event.target.querySelector('button[type="submit"]');
+      err.classList.add('hidden');
+      btn.disabled = true; btn.textContent = 'Verificando...';
+      try {
+        const r = await fetch('/api/auth', { method: 'POST', headers: { 'x-admin-password': pass } });
+        const d = await r.json().catch(() => ({}));
+        if (r.ok) {
+          sessionStorage.setItem('matos_admin_pw', pass);
+          sessionStorage.setItem('matos_admin_auth', '1');
+          mostrarDashboard();
+        } else {
+          err.textContent = r.status === 401 ? 'Contraseña incorrecta.' : (d.error || `Error del servidor (${r.status}).`);
+          err.classList.remove('hidden');
+        }
+      } catch (e) {
+        err.textContent = 'No se pudo conectar con el servidor. El login solo funciona una vez desplegado en Vercel.';
+        err.classList.remove('hidden');
       }
+      btn.disabled = false; btn.textContent = 'Ingresar';
     }
 
     function cerrarSesion() {
       sessionStorage.removeItem('matos_admin_auth');
+      sessionStorage.removeItem('matos_admin_pw');
       location.reload();
     }
 
@@ -412,7 +449,7 @@
       inicializarPanel();
     }
 
-    if (sessionStorage.getItem('matos_admin_auth') === '1') {
+    if (sessionStorage.getItem('matos_admin_auth') === '1' && sessionStorage.getItem('matos_admin_pw')) {
       mostrarDashboard();
     }
 
@@ -426,6 +463,7 @@
       await obtenerDolarBlueRosario();
       await cargarProductosRemotos();
       calcularPrecioAdmin();
+      if (window.VP) VP.init();   // panel de ventas, equipos a pagar y proveedores (ventas-panel.js)
     }
 
     async function obtenerDolarBlueRosario() {
@@ -462,7 +500,7 @@
       try {
         const response = await fetch('/api/jsonbin', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders(),
           body: JSON.stringify(productos)
         });
         const resultado = await response.json();
@@ -583,7 +621,7 @@
           const base64 = await fileToBase64(file);
           const response = await fetch('/api/media', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(),
             body: JSON.stringify({ filename: file.name, contentType: file.type, data: base64 })
           });
           const resultado = await response.json();
@@ -612,7 +650,7 @@
 
       if (item.key) {
         try {
-          await fetch(`/api/media?key=${encodeURIComponent(item.key)}`, { method: 'DELETE' });
+          await fetch(`/api/media?key=${encodeURIComponent(item.key)}`, { method: 'DELETE', headers: authHeaders() });
         } catch (error) {
           console.error('No se pudo borrar el archivo del almacenamiento:', error);
         }
