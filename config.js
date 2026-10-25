@@ -34,3 +34,16 @@ const VENTAS_CONFIG = {
   recargoCripto: 0,
   recargoFinanciado: 0      // interés por vender "a pagar"
 };
+
+// ------------------------------------------------------------
+// RECIBO DE COMPRA (solo lo usa admin.html)
+// ------------------------------------------------------------
+const RECIBO_CONFIG = {
+  // Página web que sale en el recibo. Si lo dejás vacío usa el dominio del sitio.
+  web: '',
+  // Días de cambio de los obsequios (cargadores, cables, AirPods)
+  diasCambioObsequios: 14,
+  // Para reemplazar TODAS las condiciones de venta por tu propio texto,
+  // escribilas acá, una por línea. Si queda vacío se usan las que vienen por defecto.
+  politicas: []
+};

@@ -558,6 +558,8 @@
       cripto: metodo === 'cripto' ? { moneda: $('vf-cripto-moneda').value, nota: $('vf-cripto-nota').value.trim() } : null,
       brutoUSD: c.brutoUSD, brutoARS: c.brutoARS, netoUSD: c.netoUSD, costoTotalUSD: c.costoTotalUSD,
       gananciaUSD: c.gananciaUSD, valorCuotaARS: c.valorCuotaARS,
+      condicion: p ? (p.condicion || '') : '', bateria: p ? (p.bateria || '') : '', garantia: p ? (p.garantia || '') : '',
+      nro: datos.ventas.reduce((mx, x) => Math.max(mx, x.nro || 0), 0) + 1,
       descontoStock: 0, financiado: null
     };
 
@@ -671,6 +673,7 @@
         <td class="p-3 text-right text-blue-300 font-bold">${fUSD(v.netoUSD)}</td>
         <td class="p-3 text-right font-bold ${v.gananciaUSD >= 0 ? 'text-emerald-300' : 'text-red-400'}">${fUSD(v.gananciaUSD)}</td>
         <td class="p-3 text-right whitespace-nowrap space-x-2">
+          <button type="button" onclick="VP.abrirRecibo('${v.id}')" title="Recibo" class="text-emerald-400"><i class="fa-solid fa-receipt"></i></button>
           <button type="button" onclick="VP.verVenta('${v.id}')" title="Ver detalle" class="text-blue-400"><i class="fa-solid fa-eye"></i></button>
           <button type="button" onclick="VP.borrarVenta('${v.id}')" title="Eliminar" class="text-red-400"><i class="fa-solid fa-trash"></i></button>
         </td></tr>`;
@@ -701,8 +704,8 @@
   // ============================================================
   // MODAL
   // ============================================================
-  function modal(html) { const m = $('vp-modal'); m.innerHTML = `<div class="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl">${html}</div>`; m.classList.remove('hidden'); m.classList.add('flex'); }
-  function cerrarModal() { const m = $('vp-modal'); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); m.innerHTML = ''; } }
+  function modal(html, ancho = 'max-w-lg') { const m = $('vp-modal'); m.innerHTML = `<div class="w-full ${ancho} max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl">${html}</div>`; m.classList.remove('hidden'); m.classList.add('flex'); }
+  function cerrarModal() { rc = null; const m = $('vp-modal'); if (m) { m.classList.add('hidden'); m.classList.remove('flex'); m.innerHTML = ''; } }
 
   function verVenta(id) {
     const v = datos.ventas.find(x => x.id === id); if (!v) return;
@@ -721,6 +724,7 @@
       ${f('Neto', fUSD(v.netoUSD))}${f('Costo + gastos', fUSD(v.costoTotalUSD))}
       ${f('Te queda', `<span class="${v.gananciaUSD >= 0 ? 'text-emerald-300' : 'text-red-400'}">${fUSD(v.gananciaUSD)}</span>`)}
       ${v.notas ? f('Notas', esc(v.notas)) : ''}
+      <button type="button" onclick="VP.abrirRecibo('${v.id}')" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold text-sm"><i class="fa-solid fa-receipt mr-1"></i>Recibo de compra</button>
       ${v.financiado ? `<button type="button" onclick="VP.cerrarModal();VP.tab('financiados')" class="mt-4 w-full bg-amber-600 hover:bg-amber-500 py-3 rounded-xl font-bold text-sm">Ver seguimiento de pagos</button>` : ''}`);
   }
 
@@ -786,6 +790,7 @@
         <div class="flex flex-wrap gap-2 mt-3">
           ${e.saldado ? '' : `<button type="button" onclick="VP.abrirPago('${v.id}')" class="text-xs font-bold px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500"><i class="fa-solid fa-plus mr-1"></i>Registrar pago</button>`}
           <button type="button" onclick="VP.togglePlan('${v.id}')" class="text-xs font-bold px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15"><i class="fa-solid fa-list mr-1"></i>${abierto ? 'Ocultar' : 'Ver'} pagos (${pagos.length})</button>
+          <button type="button" onclick="VP.abrirRecibo('${v.id}')" class="text-xs font-bold px-3 py-2 rounded-lg bg-emerald-700/70 hover:bg-emerald-600"><i class="fa-solid fa-receipt mr-1"></i>Recibo</button>
           ${e.saldado ? '' : wa}
           <button type="button" onclick="VP.borrarVenta('${v.id}')" class="text-xs font-bold px-3 py-2 rounded-lg bg-white/5 hover:bg-red-600/60 text-slate-400 ml-auto" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
         </div>${hist}</div>`;
@@ -905,6 +910,274 @@
   }
 
   // ============================================================
+  // RECIBO DE COMPRA (imprimir / PDF / imagen para WhatsApp)
+  // ============================================================
+  const RCF = typeof RECIBO_CONFIG !== 'undefined' ? RECIBO_CONFIG : {};
+  const RC_ESTADOS = [
+    ['enciende', 'Enciende y funciona correctamente'], ['pantalla', 'Pantalla sin rayones ni golpes'],
+    ['tactil', 'Táctil y botones funcionando'], ['faceid', 'Face ID / Touch ID funcionando'],
+    ['camaras', 'Cámaras frontal y trasera OK'], ['audio', 'Altavoz, micrófono y vibración OK'],
+    ['carga', 'Carga y puerto de conexión OK'], ['senal', 'Señal, Wi-Fi y Bluetooth OK'],
+    ['icloud', 'Sin cuenta iCloud ni bloqueos'], ['imei', 'IMEI verificado y coincide'],
+    ['estetica', 'Estética acorde a lo informado'], ['caja', 'Entregado con caja original']
+  ];
+  const RC_OBSEQUIOS = [['cargador', 'Cargador / fuente'], ['cable', 'Cable'], ['airpods', 'AirPods'], ['funda', 'Funda'], ['vidrio', 'Vidrio templado']];
+  let rc = null;
+
+  const garantiaDefault = (v, p) => (p && p.garantia) || (v.condicion === 'Nuevo' ? '1 año de garantía Apple' : 'Garantía 6 meses incluida');
+  function asegurarNro(v) {
+    if (v.nro) return;
+    v.nro = datos.ventas.reduce((m, x) => Math.max(m, x.nro || 0), 0) + 1;
+  }
+  const nroTxt = v => String(v.nro || 0).padStart(4, '0');
+  function datosNegocio() {
+    const cfg = typeof CONFIG !== 'undefined' ? CONFIG : {};
+    const d = String(cfg.whatsapp || '').replace(/\D/g, '');
+    const wa = d.length === 13 ? `+${d.slice(0, 2)} ${d.slice(2, 3)} ${d.slice(3, 6)} ${d.slice(6, 9)}-${d.slice(9)}` : (d ? '+' + d : '');
+    const ig = (String(cfg.instagram || '').match(/instagram\.com\/([^/?#]+)/) || [])[1];
+    return { web: RCF.web || location.host, wa, ig: ig ? '@' + ig : '' };
+  }
+  const politicas = (v, garantia) => {
+    const dias = RCF.diasCambioObsequios || 14;
+    const l = [
+      'El cliente revisó y probó el equipo en el momento de la entrega. Con su firma declara recibirlo en el estado tildado en este recibo.',
+      `Garantía del equipo: ${garantia || 'según lo informado por el vendedor'}. Cubre fallas de funcionamiento no ocasionadas por el usuario. No cubre golpes, pantalla o vidrio roto, humedad o líquidos, aperturas o reparaciones de terceros, mal uso ni modificaciones de software.`,
+      'Cambios y devoluciones del equipo: solo por falla de funcionamiento verificada dentro del plazo de garantía, con el equipo en el mismo estado, sin bloqueos ni daños, con su caja, accesorios originales y este recibo.',
+      `Obsequios: los cargadores, cables, AirPods y demás accesorios entregados de regalo no tienen garantía y no admiten cambio pasados los ${dias} días corridos desde la entrega.`,
+      'El equipo se entrega libre de bloqueos. El cliente es responsable de configurar su propio ID de Apple y de resguardar su información.',
+      'Compras a distancia: rige el derecho de revocación de 10 días corridos de la Ley 24.240, devolviendo el equipo sin uso y en su estado original.'
+    ];
+    if (v.financiado) l.push('Venta a pagar: el cliente se compromete a abonar el saldo en las fechas acordadas.');
+    return (RCF.politicas && RCF.politicas.length ? RCF.politicas : l);
+  };
+
+  function abrirRecibo(id) {
+    const v = datos.ventas.find(x => x.id === id); if (!v) return;
+    asegurarNro(v);
+    const p = listaProductos().find(x => String(x.id) === String(v.productoId));
+    const r = v.recibo || {};
+    rc = {
+      id, checks: new Set(r.checks || []), obsequios: new Set(r.obsequios || []), obs: r.obs || '',
+      garantia: r.garantia != null ? r.garantia : garantiaDefault(v, p), bateria: v.bateria || (p && p.bateria) || '', firma: ''
+    };
+    const B = 'text-xs font-bold px-3 py-2 rounded-lg transition';
+    modal(`
+      <div class="vp-noprint">
+        <div class="flex justify-between items-start gap-3 mb-3">
+          <div><h3 class="font-heading font-black text-lg"><i class="fa-solid fa-receipt mr-2 text-blue-400"></i>Recibo N° ${nroTxt(v)}</h3>
+          <p class="text-xs text-slate-400">Tildá el estado de entrega, hacé firmar al cliente en la pantalla y enviá o imprimí.</p></div>
+          <button type="button" onclick="VP.cerrarModal()" class="text-slate-400 text-xl leading-none">×</button>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button type="button" onclick="VP.rcImprimir()" class="${B} bg-blue-600 hover:bg-blue-500"><i class="fa-solid fa-print mr-1"></i>Imprimir / PDF</button>
+          <button type="button" onclick="VP.rcDescargar()" class="${B} bg-emerald-600 hover:bg-emerald-500"><i class="fa-solid fa-image mr-1"></i>Descargar imagen</button>
+          <button type="button" onclick="VP.rcCompartir()" class="${B} bg-emerald-700 hover:bg-emerald-600"><i class="fa-brands fa-whatsapp mr-1"></i>Compartir</button>
+          ${v.telefono ? `<a href="${waLinkSimple(v)}" target="_blank" rel="noopener" class="${B} bg-white/10 hover:bg-white/15">Abrir chat del cliente</a>` : ''}
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3 mb-3">
+          <div><label class="text-xs text-slate-400 mb-1 block">Garantía del equipo (texto del recibo)</label><input value="${esc(rc.garantia)}" oninput="VP.rcCampo('garantia',this.value)" class="${INP}"></div>
+          <div><label class="text-xs text-slate-400 mb-1 block">Observaciones</label><input value="${esc(rc.obs)}" oninput="VP.rcCampo('obs',this.value)" placeholder="Ej. leve marca en el marco" class="${INP}"></div>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button type="button" onclick="VP.rcTildarTodo(true)" class="${B} bg-white/10 hover:bg-white/15">Tildar todo el estado</button>
+          <button type="button" onclick="VP.rcTildarTodo(false)" class="${B} bg-white/10 hover:bg-white/15">Destildar</button>
+          <button type="button" onclick="VP.rcBorrarFirma()" class="${B} bg-white/10 hover:bg-white/15">Borrar firma</button>
+        </div>
+      </div>
+      <div class="rc-wrap" id="rc-wrap"><div id="rc-doc" class="rc-doc"></div></div>`, 'max-w-4xl');
+    rcRender(); rcZoom();
+  }
+  function waLinkSimple(v) {
+    let d = String(v.telefono || '').replace(/\D/g, '').replace(/^0+/, '');
+    if (!d.startsWith('54')) d = '549' + d;
+    return `https://wa.me/${d}?text=${encodeURIComponent(`Hola ${v.cliente || ''}! Te paso el recibo de tu compra en Matos iPhone Rosario. ¡Gracias!`)}`;
+  }
+  function rcZoom() {
+    const w = $('rc-wrap'); if (!w) return;
+    const disp = Math.min(window.innerWidth - 56, 794);
+    w.style.zoom = disp < 794 ? (disp / 794).toFixed(3) : 1;
+  }
+  function rcCampo(k, val) { rc[k] = val; rcRender(); }
+  function rcToggle(grupo, k, el) {
+    const set = grupo === 'c' ? rc.checks : rc.obsequios;
+    set.has(k) ? set.delete(k) : set.add(k);
+    const on = set.has(k);
+    el.firstElementChild.classList.toggle('on', on); el.firstElementChild.textContent = on ? '✓' : '';
+  }
+  function rcTildarTodo(on) { rc.checks = on ? new Set(RC_ESTADOS.map(e => e[0])) : new Set(); rcRender(); }
+  function rcBorrarFirma() { rc.firma = ''; rcRender(); }
+
+  function rcRender() {
+    const v = datos.ventas.find(x => x.id === rc.id), doc = $('rc-doc'); if (!v || !doc) return;
+    const n = datosNegocio(), esARS = (METODOS[v.metodo] || {}).moneda === 'ARS', k = esARS ? v.cot : 1, fm = esARS ? fARS : fUSD;
+    const base = v.precioUSD * v.cantidad * k, recargo = v.brutoUSD * k - base, total = v.brutoUSD * k;
+    const chk = (g, key, label) => {
+      const on = (g === 'c' ? rc.checks : rc.obsequios).has(key);
+      return `<div class="rc-chk" onclick="VP.rcToggle('${g}','${key}',this)"><span class="rc-box ${on ? 'on' : ''}">${on ? '✓' : ''}</span><span>${label}</span></div>`;
+    };
+    const m = METODOS[v.metodo] || { label: v.metodo };
+    let pago = `<b>${m.label}</b>`;
+    if (v.metodo === 'credito') pago += ` — ${v.cuotas} ${v.cuotas === 1 ? 'pago' : 'cuotas'} de <b>${fARS(v.valorCuotaARS)}</b> (total ${fARS(v.brutoARS)})`;
+    if (v.metodo === 'debito') pago += ' — importe final con recargo de débito';
+    if (v.metodo === 'cripto' && v.cripto) pago += ` — ${esc(v.cripto.moneda)}${v.cripto.nota ? ' (' + esc(v.cripto.nota) + ')' : ''}`;
+    if (v.metodo === 'usd') pago += ' — dólares billete';
+    let fin = '';
+    if (v.financiado) {
+      const e = estadoPlan(v);
+      fin = `<div class="rc-fin">Entregado a pagar · Pagado a la fecha: <b>${fUSD(e.pagado)}</b> · Saldo pendiente: <b>${fUSD(e.debe)}</b>${v.financiado.cuotasPactadas ? ` · ${v.financiado.cuotasPactadas} cuotas de ~${fUSD(e.valorCuotaUSD)}${v.financiado.primerVencimiento ? ', 1er vencimiento ' + fmtF(v.financiado.primerVencimiento) : ''}` : ''}</div>`;
+    }
+    const ref = esARS ? `Equivale a ${fUSD(v.brutoUSD)} · cotización de referencia ${fARS(v.cot)}` : `Equivale a ${fARS(v.brutoARS)} · cotización de referencia ${fARS(v.cot)}`;
+    const imeiTxt = v.imei ? (String(v.imei).length <= 8 ? '…' + esc(v.imei) : esc(v.imei)) : '';
+    doc.innerHTML = `
+      <div class="rc-head">
+        <img src="Logo.png" alt="Matos iPhone Rosario" crossorigin="anonymous" onerror="this.style.display='none'">
+        <div class="rc-title"><div class="rc-t1">RECIBO DE COMPRA</div><div>N° <b>${nroTxt(v)}</b></div><div>Fecha: <b>${fmtF(v.fecha)}</b></div></div>
+      </div>
+      <div class="rc-contact"><span>🌐 ${esc(n.web)}</span><span>💬 WhatsApp ${esc(n.wa)}</span>${n.ig ? `<span>📷 ${esc(n.ig)}</span>` : ''}</div>
+
+      <div class="rc-cols">
+        <div class="rc-box2"><div class="rc-h">Cliente</div><div><b>${esc(v.cliente || '—')}</b></div><div>Tel: ${esc(v.telefono || '—')}</div></div>
+        <div class="rc-box2"><div class="rc-h">Equipo</div><div><b>${esc(v.nombre)}</b> ${esc(v.specs || '')}</div>
+          <div>${v.condicion ? esc(v.condicion === 'Como Nuevo' ? 'Usado' : v.condicion) + ' · ' : ''}${rc.bateria && rc.bateria !== 'N/A' ? 'Batería ' + esc(rc.bateria) + ' · ' : ''}${imeiTxt ? 'IMEI ' + imeiTxt : ''}</div></div>
+      </div>
+
+      <table class="rc-tab"><thead><tr><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio unit.</th><th class="r">Importe</th></tr></thead><tbody>
+        <tr><td>${esc(v.nombre)} ${esc(v.specs || '')}</td><td class="r">${v.cantidad}</td><td class="r">${fm(v.precioUSD * k)}</td><td class="r">${fm(base)}</td></tr>
+        ${Math.abs(recargo) > 0.005 ? `<tr><td>${recargo > 0 ? 'Recargo' : 'Descuento'} por medio de pago / financiación (${Math.abs(v.recargoPct)}%)</td><td></td><td></td><td class="r">${recargo > 0 ? '' : '−'}${fm(Math.abs(recargo))}</td></tr>` : ''}
+        <tr class="tot"><td colspan="3" class="r">TOTAL</td><td class="r">${fm(total)}</td></tr>
+      </tbody></table>
+      <div class="rc-pago">Forma de pago: ${pago}<span class="rc-ref">${ref}</span></div>${fin}
+
+      <div class="rc-h2">Estado de entrega del equipo${rc.bateria && rc.bateria !== 'N/A' ? ` <span>· Batería informada: ${esc(rc.bateria)}</span>` : ''}</div>
+      <div class="rc-grid">${RC_ESTADOS.map(([key, l]) => chk('c', key, l)).join('')}</div>
+      <div class="rc-h2">Obsequios entregados <span>· sin garantía</span></div>
+      <div class="rc-grid5">${RC_OBSEQUIOS.map(([key, l]) => chk('o', key, l)).join('')}</div>
+      ${rc.obs ? `<div class="rc-obs"><b>Observaciones:</b> ${esc(rc.obs)}</div>` : ''}
+
+      <div class="rc-h2">Condiciones de venta</div>
+      <ol class="rc-pol">${politicas(v, rc.garantia).map(t => `<li>${esc(t)}</li>`).join('')}</ol>
+
+      <div class="rc-conf">Declaro haber recibido el equipo en el estado indicado, haber probado su funcionamiento y aceptar las condiciones de venta.</div>
+      <div class="rc-firmas">
+        <div><canvas id="rc-firma" width="520" height="150"></canvas><div class="rc-line">Firma del cliente</div><div class="rc-sub">Aclaración: ${esc(v.cliente || '')} &nbsp;&nbsp; DNI: ____________________</div></div>
+        <div><div class="rc-vend"></div><div class="rc-line">Matos iPhone Rosario</div><div class="rc-sub">Firma y sello del vendedor</div></div>
+      </div>
+      <div class="rc-foot">¡Gracias por tu compra! · Documento no válido como factura</div>`;
+    rcFirma();
+  }
+
+  function rcFirma() {
+    const c = $('rc-firma'); if (!c) return;
+    const ctx = c.getContext('2d'); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0a1f44';
+    if (rc.firma) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, c.width, c.height); im.src = rc.firma; }
+    let dib = false, last = null;
+    const pos = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+    c.onpointerdown = e => { dib = true; last = pos(e); c.setPointerCapture(e.pointerId); e.preventDefault(); };
+    c.onpointermove = e => { if (!dib) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); last = p; };
+    const fin = () => { if (dib) { dib = false; rc.firma = c.toDataURL('image/png'); } };
+    c.onpointerup = fin; c.onpointercancel = fin;
+  }
+
+  async function guardarRecibo() {
+    const v = datos.ventas.find(x => x.id === rc.id); if (!v) return false;
+    const snap = { checks: [...rc.checks], obsequios: [...rc.obsequios], obs: rc.obs, garantia: rc.garantia, fecha: hoyISO() };
+    // La firma NO se guarda en la nube (el bin gratuito tiene límite de tamaño): solo sale en lo que imprimís o enviás.
+    return mutar(() => { const x = datos.ventas.find(y => y.id === rc.id); x.nro = x.nro || v.nro; x.recibo = snap; });
+  }
+  const nombreArchivo = v => `Recibo-${nroTxt(v)}-${String(v.cliente || 'cliente').replace(/[^\w]+/g, '_')}`;
+
+  async function rcImprimir() {
+    const v = datos.ventas.find(x => x.id === rc.id); if (!v) return;
+    await guardarRecibo();
+    const w = $('rc-wrap'), z = w.style.zoom, t = document.title;
+    w.style.zoom = 1; document.title = nombreArchivo(v); document.body.classList.add('vp-printing');
+    window.addEventListener('afterprint', () => { document.body.classList.remove('vp-printing'); document.title = t; rcZoom(); }, { once: true });
+    setTimeout(() => window.print(), 80);
+  }
+
+  function cargarScript(src) {
+    return new Promise((ok, mal) => {
+      if (window.html2canvas) return ok();
+      const s = document.createElement('script'); s.src = src; s.onload = ok;
+      s.onerror = () => mal(new Error('No se pudo cargar el generador de imágenes'));
+      document.head.appendChild(s);
+    });
+  }
+  async function rcBlob() {
+    await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    const w = $('rc-wrap'), z = w.style.zoom; w.style.zoom = 1;
+    try {
+      const canvas = await window.html2canvas($('rc-doc'), { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+      return await new Promise(res => canvas.toBlob(res, 'image/png'));
+    } finally { w.style.zoom = z; }
+  }
+  async function rcDescargar() {
+    const v = datos.ventas.find(x => x.id === rc.id); if (!v) return;
+    try {
+      toast('Generando imagen...'); await guardarRecibo();
+      const blob = await rcBlob(), url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = nombreArchivo(v) + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast('Imagen descargada ✅');
+    } catch (e) { toast('⚠️ ' + e.message + '. Usá "Imprimir / PDF" y elegí guardar como PDF.'); }
+  }
+  async function rcCompartir() {
+    const v = datos.ventas.find(x => x.id === rc.id); if (!v) return;
+    try {
+      toast('Generando imagen...'); await guardarRecibo();
+      const blob = await rcBlob(), file = new File([blob], nombreArchivo(v) + '.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Recibo de compra ' + nroTxt(v), text: 'Recibo de compra - Matos iPhone Rosario' });
+      } else {
+        const url = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = url; a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+        toast('Este navegador no permite compartir directo: se descargó la imagen, adjuntala en WhatsApp.');
+      }
+    } catch (e) { if (e.name !== 'AbortError') toast('⚠️ ' + e.message); }
+  }
+
+  const RC_CSS = `
+  .rc-wrap { overflow-x: auto; }
+  .rc-doc { width: 794px; box-sizing: border-box; background: #fff; color: #0f172a; font-family: Inter, Arial, sans-serif; font-size: 11px; line-height: 1.35; padding: 0 0 18px; margin: 0 auto; }
+  .rc-doc * { box-sizing: border-box; }
+  .rc-head { background: #031435; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 14px 26px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rc-head img { height: 46px; width: auto; max-width: 260px; object-fit: contain; }
+  .rc-title { text-align: right; font-size: 11px; } .rc-t1 { font-family: Outfit, Inter, sans-serif; font-size: 18px; font-weight: 800; letter-spacing: .5px; }
+  .rc-contact { display: flex; justify-content: space-between; gap: 8px; background: #e8eefc; padding: 6px 26px; font-weight: 600; font-size: 10.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rc-doc > *:not(.rc-head):not(.rc-contact) { margin-left: 26px; margin-right: 26px; }
+  .rc-cols { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 12px; }
+  .rc-box2 { border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 10px; }
+  .rc-h { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; color: #1d4ed8; margin-bottom: 2px; }
+  .rc-tab { width: calc(100% - 52px); border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+  .rc-tab th { background: #f1f5f9; text-align: left; padding: 5px 8px; font-size: 9.5px; border-bottom: 1px solid #cbd5e1; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rc-tab td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; } .rc-tab .r { text-align: right; white-space: nowrap; }
+  .rc-tab tr.tot td { font-weight: 800; font-size: 13px; border-bottom: 2px solid #031435; }
+  .rc-pago { margin-top: 7px; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
+  .rc-ref { display: block; color: #64748b; font-size: 9.5px; }
+  .rc-fin { margin-top: 5px; padding: 6px 10px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 6px; }
+  .rc-h2 { margin-top: 11px; margin-bottom: 4px; font-weight: 800; font-size: 11px; border-bottom: 1.5px solid #031435; padding-bottom: 2px; } .rc-h2 span { font-weight: 500; color: #64748b; font-size: 10px; }
+  .rc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; } .rc-grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px 8px; }
+  .rc-chk { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 10.5px; }
+  .rc-box { flex: none; width: 14px; height: 14px; border: 1.5px solid #031435; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: #047857; line-height: 1; }
+  .rc-box.on { background: #d1fae5; }
+  .rc-obs { margin-top: 6px; font-size: 10.5px; }
+  .rc-pol { margin-top: 0; padding-left: 16px !important; margin-bottom: 0; font-size: 8.8px; line-height: 1.32; color: #334155; } .rc-pol li { margin-bottom: 2px; }
+  .rc-conf { margin-top: 10px; font-weight: 700; font-size: 10.5px; }
+  .rc-firmas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 4px; }
+  .rc-firmas canvas { width: 100%; height: 66px; display: block; touch-action: none; cursor: crosshair; background: repeating-linear-gradient(#fff, #fff); }
+  .rc-vend { height: 66px; } .rc-line { border-top: 1.5px solid #0f172a; text-align: center; font-weight: 700; padding-top: 2px; font-size: 10.5px; } .rc-sub { text-align: center; color: #64748b; font-size: 9.5px; }
+  .rc-foot { margin-top: 10px; text-align: center; color: #64748b; font-size: 9.5px; }
+  @media print {
+    @page { size: A4; margin: 8mm; }
+    body.vp-printing > *:not(#vp-modal) { display: none !important; }
+    body.vp-printing { background: #fff !important; }
+    body.vp-printing #vp-modal { position: static !important; display: block !important; background: #fff !important; padding: 0 !important; }
+    body.vp-printing #vp-modal > div { max-width: none !important; max-height: none !important; overflow: visible !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; background: #fff !important; }
+    body.vp-printing .vp-noprint { display: none !important; }
+    body.vp-printing .rc-wrap { zoom: 1 !important; overflow: visible !important; }
+    body.vp-printing .rc-doc { width: 100% !important; }
+  }`;
+
+  // ============================================================
   // INIT
   // ============================================================
   function renderTodo() {
@@ -919,6 +1192,8 @@
     $('tab-ventas').innerHTML = esqueletoVentas();
     $('tab-financiados').innerHTML = esqueletoFinanciados();
     $('tab-proveedores').innerHTML = esqueletoProveedores();
+    const st = document.createElement('style'); st.id = 'vp-style'; st.textContent = RC_CSS; document.head.appendChild(st);
+    window.addEventListener('resize', rcZoom);
     const mod = document.createElement('div');
     mod.id = 'vp-modal'; mod.className = 'hidden fixed inset-0 z-[90] bg-black/70 items-center justify-center p-3';
     mod.addEventListener('click', e => { if (e.target === mod) cerrarModal(); });
@@ -938,6 +1213,7 @@
   const API = {
     init, tab, setOrigen, setMetodo, onCuotas, onProducto, filtrarProductos, preview, registrar, proveedorRapido,
     renderVentas, renderFinanciados, verVenta, borrarVenta, exportarCSV, cerrarModal, nuevoFinanciado,
+    abrirRecibo, rcCampo, rcToggle, rcTildarTodo, rcBorrarFirma, rcImprimir, rcDescargar, rcCompartir,
     togglePlan, abrirPago, previewPago, guardarPago, borrarPago,
     guardarProveedor, limpiarProveedor, editarProveedor, borrarProveedor, reintentar, refrescarCatalogo,
     // para pruebas
