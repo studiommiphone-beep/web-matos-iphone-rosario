@@ -633,6 +633,10 @@
       </div>
 
       <div class="grid gap-2 mt-4">
+        <button id="cart-mp-btn" onclick="pagarConMercadoPago()" class="mp-only hidden w-full bg-sky-500 hover:bg-sky-600 text-white py-3.5 rounded-xl font-extrabold transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+          <i class="fa-solid fa-credit-card"></i>
+          Pagar con Mercado Pago · hasta 18 cuotas
+        </button>
         <button id="cart-send-btn" onclick="enviarPedidoWhatsApp()" class="w-full disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-extrabold transition flex items-center justify-center gap-2">
           <i class="fa-brands fa-whatsapp"></i>
           Consultar cuotas / reservar por WhatsApp
@@ -677,6 +681,19 @@
 
   <!-- El panel de administración sigue en /admin.html (guardalo en favoritos).
        Se sacó el botón público para no mostrarle a los clientes la puerta de entrada. -->
+
+  <!-- RESULTADO DEL PAGO (vuelve de Mercado Pago) -->
+  <div id="pago-modal" class="hidden fixed inset-0 z-[90] modal-bg p-4 flex items-center justify-center" role="dialog" aria-modal="true">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-7 text-center">
+      <div id="pago-icono" class="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl"></div>
+      <h3 id="pago-titulo" class="font-heading text-2xl font-black mt-4"></h3>
+      <p id="pago-texto" class="text-slate-500 text-sm mt-2 leading-relaxed"></p>
+      <a id="pago-whatsapp" href="#" target="_blank" rel="noopener" class="mt-6 w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center gap-2">
+        <i class="fa-brands fa-whatsapp"></i>Coordinar entrega por WhatsApp
+      </a>
+      <button onclick="document.getElementById('pago-modal').classList.add('hidden')" class="mt-2 w-full py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cerrar</button>
+    </div>
+  </div>
 
   <!-- TOAST -->
   <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold">
@@ -1179,6 +1196,12 @@
               <button onclick="consultarProductoWhatsApp(${prod.id})" class="bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center">
                 <i class="fa-brands fa-whatsapp mr-2"></i>Consultar por WhatsApp
               </button>
+              ${mpActivo && estadoDisp(prod) !== 'Sin stock' ? `
+                <button onclick="pagarConMercadoPago([{ id: ${JSON.stringify(prod.id).replace(/"/g, '&quot;')}, cantidad: 1 }], this)" class="sm:col-span-2 bg-sky-500 hover:bg-sky-600 text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-credit-card"></i>Comprar ahora con Mercado Pago
+                </button>
+                <p class="sm:col-span-2 text-[11px] text-slate-400 text-center">Pagás en pesos al dólar del día. Cuotas con el interés que informa Mercado Pago.</p>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -1352,6 +1375,8 @@
       document.getElementById('cart-total-ars').textContent = `$${moneyARS(totalARS)} ARS`;
       const btn = document.getElementById('cart-send-btn');
       if (btn) btn.disabled = totalCount === 0;
+      const mpBtn = document.getElementById('cart-mp-btn');
+      if (mpBtn && !mpBtn.innerHTML.includes('spinner')) mpBtn.disabled = totalCount === 0;
     }
 
     function toggleCart() {
@@ -1379,6 +1404,69 @@
       window.open(whatsappURL(message), '_blank', 'noopener');
     }
 
+    // ---------- MERCADO PAGO ----------
+    let mpActivo = false;
+
+    async function verificarMercadoPago() {
+      try {
+        const r = await fetch('/api/pago', { cache: 'no-store' });
+        mpActivo = r.ok && (await r.json()).activo === true;
+      } catch (e) { mpActivo = false; }
+      document.querySelectorAll('.mp-only').forEach(el => el.classList.toggle('hidden', !mpActivo));
+    }
+
+    async function pagarConMercadoPago(items, boton) {
+      const pedido = items || carrito.map(i => ({ id: i.id, cantidad: i.cantidad }));
+      if (!pedido.length) return;
+      const btn = boton || document.getElementById('cart-mp-btn');
+      const textoOriginal = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparando el pago...'; }
+      try {
+        const r = await fetch('/api/pago', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: pedido }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || !d.url) throw new Error(d.error || 'No pudimos iniciar el pago.');
+        localStorage.setItem('matos_pago_pendiente', JSON.stringify({ items: pedido, referencia: d.referencia, desdeCarrito: !items }));
+        location.href = d.url;
+      } catch (e) {
+        showToast(e.message);
+        cargarProductosRemotos();
+        if (btn) { btn.disabled = false; btn.innerHTML = textoOriginal; }
+      }
+    }
+
+    // Al volver de Mercado Pago: ?pago=aprobado|pendiente|rechazado
+    function mostrarResultadoPago() {
+      const params = new URLSearchParams(location.search);
+      const estado = params.get('pago');
+      if (!estado) return;
+      const pagoId = params.get('payment_id') || params.get('collection_id') || '';
+      const pendiente = JSON.parse(localStorage.getItem('matos_pago_pendiente') || 'null');
+      const vistas = {
+        aprobado: { icono: 'fa-circle-check', color: 'bg-emerald-100 text-emerald-600', titulo: '¡Pago aprobado!', texto: 'Gracias por tu compra. Escribinos por WhatsApp para coordinar la entrega o el envío.' },
+        pendiente: { icono: 'fa-clock', color: 'bg-amber-100 text-amber-600', titulo: 'Pago pendiente', texto: 'Mercado Pago está procesando el pago. Te avisamos apenas se acredite; si querés, escribinos.' },
+        rechazado: { icono: 'fa-circle-xmark', color: 'bg-red-100 text-red-600', titulo: 'El pago no se completó', texto: 'No se realizó ningún cobro. Podés intentar con otro medio o escribirnos y te ayudamos.' }
+      };
+      const v = vistas[estado] || vistas.rechazado;
+      document.getElementById('pago-icono').className = `w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl ${v.color}`;
+      document.getElementById('pago-icono').innerHTML = `<i class="fa-solid ${v.icono}"></i>`;
+      document.getElementById('pago-titulo').textContent = v.titulo;
+      document.getElementById('pago-texto').textContent = v.texto;
+      const ref = pendiente && pendiente.referencia ? ` (pedido ${pendiente.referencia})` : '';
+      const msg = estado === 'aprobado'
+        ? `Hola! Acabo de pagar con Mercado Pago${ref}. N° de operación: ${pagoId}. Quiero coordinar la entrega.`
+        : `Hola! Tuve un problema pagando con Mercado Pago${ref}. ¿Me ayudan?`;
+      document.getElementById('pago-whatsapp').href = whatsappURL(msg);
+      document.getElementById('pago-modal').classList.remove('hidden');
+
+      if (estado === 'aprobado' && pendiente && pendiente.desdeCarrito) {
+        carrito = [];
+        saveCart();
+        updateCartUI();
+      }
+      if (estado !== 'pendiente') localStorage.removeItem('matos_pago_pendiente');
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+
     setupWhatsAppLinks();
     updateCategoryButtons();
     updateCartUI();
@@ -1386,6 +1474,8 @@
     document.getElementById('anio-actual').textContent = new Date().getFullYear();
 
     document.addEventListener('DOMContentLoaded', () => {
+      verificarMercadoPago();
+      mostrarResultadoPago();
       obtenerDolarBlueRosario();
       cargarProductosRemotos();
     });
