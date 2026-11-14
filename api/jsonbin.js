@@ -7,7 +7,27 @@
 // Environment Variables): JSONBIN_BIN_ID y JSONBIN_KEY
 // ============================================================
 
-const { rechazar } = require('./_auth');
+const { rechazar, passwordValida } = require('./_auth');
+
+// Campos internos que el público NUNCA debe ver (el costo deja ver tu margen).
+// El IMEI parcial (últimos dígitos) se sigue mostrando: va en el mensaje de WhatsApp
+// para que identifiques la unidad exacta.
+// Solo se devuelven completos si el pedido trae la contraseña del admin.
+const CAMPOS_PRIVADOS = ['costoBaseUSD', 'proveedor', 'proveedorId', 'notasInternas'];
+
+function versionPublica(lista) {
+  if (!Array.isArray(lista)) return lista;
+  return lista.map(prod => {
+    if (!prod || typeof prod !== 'object') return prod;
+    const copia = { ...prod };
+    CAMPOS_PRIVADOS.forEach(campo => delete copia[campo]);
+    // De la galería sacamos la "key" interna de borrado; dejamos url/tipo
+    if (Array.isArray(copia.galeria)) {
+      copia.galeria = copia.galeria.map(({ key, ...resto }) => resto);
+    }
+    return copia;
+  });
+}
 
 module.exports = async (req, res) => {
   const BIN_ID = process.env.JSONBIN_BIN_ID;
@@ -41,12 +61,14 @@ module.exports = async (req, res) => {
 
       // Devuelve data.record si existe, o el objeto directo
       const recordData = data.record ? data.record : data;
-      return res.status(200).json(recordData);
+      // Con contraseña válida (panel admin) va todo; para el público, sin costos
+      const esAdmin = process.env.ADMIN_PASSWORD && passwordValida(req);
+      return res.status(200).json(esAdmin ? recordData : versionPublica(recordData));
     }
 
-    // GUARDAR DATOS (PUT) — requiere contraseña si ADMIN_PASSWORD está configurada en Vercel
+    // GUARDAR DATOS (PUT) — SIEMPRE requiere la contraseña del admin
     if (req.method === 'PUT') {
-      if (rechazar(req, res, false)) return;
+      if (rechazar(req, res, true)) return;
       const bodyData = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const response = await fetch(URL, {
         method: 'PUT',
