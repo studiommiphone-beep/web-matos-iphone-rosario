@@ -1,15 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <link rel="stylesheet" href="style.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Matos iPhone Rosario — iPhones usados y sellados, AirPods y accesorios. Equipos seleccionados y atención personalizada.">
+  <title>Matos iPhone Rosario | iPhone sellados y usados, AirPods y accesorios</title>
+  <meta name="description" content="iPhones sellados y usados con garantía en Rosario. Hasta 18 cuotas fijas, plan canje y envíos a todo el país. Funda, fuente, cable y vidrio de regalo.">
   <meta name="theme-color" content="#031435">
-  <title>Matos iPhone Rosario | iPhone, AirPods y Accesorios</title>
+  <link rel="canonical" href="https://matosiphonesrosario.com.ar/">
+
+  <!-- Vista previa al compartir el link (WhatsApp, Instagram, Facebook) -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:site_name" content="Matos iPhone Rosario">
+  <meta property="og:title" content="Matos iPhone Rosario | Tu próximo iPhone empieza acá">
+  <meta property="og:description" content="iPhones sellados y usados con garantía. Hasta 18 cuotas fijas, plan canje y envíos a todo el país.">
+  <meta property="og:url" content="https://matosiphonesrosario.com.ar/">
+  <meta property="og:image" content="https://matosiphonesrosario.com.ar/img/og-matos.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Datos para Google (negocio local) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "Matos iPhone Rosario",
+    "url": "https://matosiphonesrosario.com.ar/",
+    "logo": "https://matosiphonesrosario.com.ar/Logo.png",
+    "image": "https://matosiphonesrosario.com.ar/img/og-matos.jpg",
+    "telephone": "+54 9 341 323-0764",
+    "address": { "@type": "PostalAddress", "addressLocality": "Rosario", "addressRegion": "Santa Fe", "addressCountry": "AR" },
+    "areaServed": "AR",
+    "sameAs": ["https://www.instagram.com/matosiphonerosario/"]
+  }
+  </script>
 
   <!-- FAVICON -->
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="preload" as="image" href="img/iPhone-17-pro-plata-Photoroom.png" fetchpriority="high">
+  <link rel="stylesheet" href="style.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -450,6 +481,7 @@
           <option value="Open Box">Open Box</option>
           <option value="Como Nuevo">Usados</option>
         </select>
+
       </div>
     </div>
 
@@ -465,7 +497,16 @@
     <!-- LÍNEA / GENERACIÓN TABS -->
     <div id="linea-tabs-row" class="hidden mobile-scroll flex gap-2 pb-2 mb-6 border-b border-slate-200"></div>
 
-    <div id="results-info" class="text-sm text-slate-500 mb-5"></div>
+    <div class="flex items-center justify-between gap-3 mb-5">
+      <div id="results-info" class="text-sm text-slate-500"></div>
+      <select id="orden-select" onchange="renderProductos(getFilteredProducts())" aria-label="Ordenar" class="px-3 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="relevancia">Destacados</option>
+          <option value="nuevos">Modelos más nuevos</option>
+          <option value="precio-asc">Menor precio</option>
+          <option value="precio-desc">Mayor precio</option>
+          <option value="bateria">Mejor batería</option>
+        </select>
+    </div>
 
     <!-- PRODUCT GRID -->
     <div id="productos-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
@@ -508,7 +549,60 @@
         </a>
       </div>
     </div>
+
+    <!-- CÓMO COMPRAR -->
+    <section id="como-comprar" class="mt-16">
+      <p class="text-blue-600 text-xs font-extrabold uppercase tracking-[.18em]">Simple y seguro</p>
+      <h2 class="font-heading text-3xl md:text-4xl font-black mt-1">Cómo comprar</h2>
+      <div class="mt-7 grid sm:grid-cols-3 gap-4">
+        <div class="rounded-3xl bg-white border border-slate-200 p-6">
+          <div class="w-10 h-10 rounded-xl bg-matos text-white flex items-center justify-center font-black">1</div>
+          <h3 class="font-heading text-lg font-black mt-4">Elegí tu equipo</h3>
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">Mirá el catálogo con fotos reales, batería y estado de cada equipo. Sumalo al carrito.</p>
+        </div>
+        <div class="rounded-3xl bg-white border border-slate-200 p-6">
+          <div class="w-10 h-10 rounded-xl bg-matos text-white flex items-center justify-center font-black">2</div>
+          <h3 class="font-heading text-lg font-black mt-4">Reservalo por WhatsApp</h3>
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">Te confirmamos disponibilidad y te pasamos el plan de cuotas o el valor de tu usado en canje.</p>
+        </div>
+        <div class="rounded-3xl bg-white border border-slate-200 p-6">
+          <div class="w-10 h-10 rounded-xl bg-matos text-white flex items-center justify-center font-black">3</div>
+          <h3 class="font-heading text-lg font-black mt-4">Retiralo o recibilo</h3>
+          <p class="text-sm text-slate-500 mt-1.5 leading-relaxed">Entrega inmediata en Rosario o envío a todo el país, con tus accesorios de regalo.</p>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-matos-dark text-slate-300 mt-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid gap-8 md:grid-cols-3 text-sm">
+      <div>
+        <img src="Logo.png" alt="Matos iPhone Rosario" class="h-12 w-auto" loading="lazy">
+        <p class="mt-4 text-slate-400 leading-relaxed">iPhones sellados y usados, AirPods y accesorios. Rosario, Santa Fe — envíos a todo el país.</p>
+      </div>
+      <div>
+        <h4 class="font-heading text-white font-bold text-base">Catálogo</h4>
+        <ul class="mt-3 space-y-2">
+          <li><button onclick="setCategory('iphone')" class="hover:text-white">iPhones</button></li>
+          <li><button onclick="setCondition('Nuevo')" class="hover:text-white">Sellados</button></li>
+          <li><button onclick="setCategory('airpods')" class="hover:text-white">AirPods</button></li>
+          <li><button onclick="setCategory('accesorios')" class="hover:text-white">Accesorios</button></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-heading text-white font-bold text-base">Contacto</h4>
+        <ul class="mt-3 space-y-2">
+          <li><a id="footer-whatsapp" href="#" target="_blank" rel="noopener" class="hover:text-white inline-flex items-center gap-2"><i class="fa-brands fa-whatsapp text-emerald-400"></i>WhatsApp</a></li>
+          <li><a href="https://www.instagram.com/matosiphonerosario/" target="_blank" rel="noopener" class="hover:text-white inline-flex items-center gap-2"><i class="fa-brands fa-instagram text-pink-400"></i>@matosiphonerosario</a></li>
+          <li class="inline-flex items-center gap-2"><i class="fa-solid fa-location-dot text-blue-400"></i>Rosario, Santa Fe</li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10 text-center text-xs text-slate-500 py-5 px-4">
+      © <span id="anio-actual"></span> Matos iPhone Rosario · Precios en USD; el valor en pesos es de referencia según cotización del día.
+    </div>
+  </footer>
 
   <!-- CART OVERLAY -->
   <div id="cart-overlay" onclick="toggleCart()" class="hidden fixed inset-0 bg-black/50 z-50"></div>
@@ -538,7 +632,7 @@
       </div>
 
       <div class="grid gap-2 mt-4">
-        <button onclick="enviarPedidoWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-extrabold transition flex items-center justify-center gap-2">
+        <button id="cart-send-btn" onclick="enviarPedidoWhatsApp()" class="w-full disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-extrabold transition flex items-center justify-center gap-2">
           <i class="fa-brands fa-whatsapp"></i>
           Consultar cuotas / reservar por WhatsApp
         </button>
@@ -547,11 +641,14 @@
   </aside>
 
   <!-- PRODUCT DETAIL MODAL -->
-  <div id="product-modal" class="hidden fixed inset-0 z-[70] modal-bg p-4 overflow-y-auto">
-    <div class="min-h-full flex items-center justify-center py-8">
+  <div id="product-modal" class="hidden fixed inset-0 z-[70] modal-bg p-4 overflow-y-auto" role="dialog" aria-modal="true">
+    <div class="min-h-full flex items-center justify-center py-8" onclick="if (event.target === this) closeProductModal()">
       <div class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden">
-        <div class="flex justify-end p-3">
-          <button onclick="closeProductModal()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
+        <div class="flex justify-end gap-2 p-3">
+          <button onclick="compartirProducto()" class="h-10 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center gap-2 text-sm font-bold" aria-label="Compartir equipo">
+            <i class="fa-solid fa-share-nodes"></i><span class="hidden sm:inline">Compartir</span>
+          </button>
+          <button onclick="closeProductModal()" aria-label="Cerrar" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -577,10 +674,8 @@
     </div>
   </a>
 
-  <!-- ACCESO DISCRETO AL PANEL DE ADMINISTRACIÓN (separado en admin.html) -->
-  <a href="admin.html" title="Panel Admin" class="fixed bottom-3 left-3 z-30 w-8 h-8 rounded-full bg-slate-900/10 hover:bg-slate-900/70 text-slate-400 hover:text-white flex items-center justify-center transition text-xs">
-    <i class="fa-solid fa-gear"></i>
-  </a>
+  <!-- El panel de administración sigue en /admin.html (guardalo en favoritos).
+       Se sacó el botón público para no mostrarle a los clientes la puerta de entrada. -->
 
   <!-- TOAST -->
   <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-bold">
@@ -598,93 +693,12 @@
     let carrito = JSON.parse(localStorage.getItem('matos_carrito') || '[]');
     const ACCESORIOS_REGALO_COSTO = 10; // 10 USD de costo fijo sobre el equipo para accesorios regalados
 
-    // Variantes individuales por equipo (mismo modelo diferenciado por GB, Color y Stock específico)
-    let productos = [
-      {
-        id: 1502,
-        nombre: "iPhone 15 Pro",
-        categoria: "iphone",
-        condicion: "Como Nuevo",
-        disponibilidad: "En Stock",
-        costoBaseUSD: 550,
-        precioDirectoUSD: 605,
-        tipoCotizacion: "blue",
-        bateria: "100%",
-        stock: 3,
-        specs: "128GB · Natural Titanium · Estética A+",
-        imagenes: ["img/iphone-15-pro-natural-128gb.jpg"]
-      },
-      {
-        id: 1503,
-        nombre: "iPhone 15 Pro",
-        categoria: "iphone",
-        condicion: "Como Nuevo",
-        disponibilidad: "En Stock",
-        costoBaseUSD: 550,
-        precioDirectoUSD: 605,
-        tipoCotizacion: "blue",
-        bateria: "100%",
-        stock: 3,
-        specs: "128GB · Black · Estética A+",
-        imagenes: ["img/iphone-15-pro-black-128gb.jpg"]
-      },
-      {
-        id: 1504,
-        nombre: "iPhone 15 Pro",
-        categoria: "iphone",
-        condicion: "Como Nuevo",
-        disponibilidad: "En Stock",
-        costoBaseUSD: 580,
-        precioDirectoUSD: 640,
-        tipoCotizacion: "blue",
-        bateria: "100%",
-        stock: 3,
-        specs: "256GB · Black · Estética A",
-        imagenes: ["img/iphone-15-pro-black-256gb.jpg"]
-      },
-      {
-        id: 1505,
-        nombre: "iPhone 15 Pro",
-        categoria: "iphone",
-        condicion: "Como Nuevo",
-        disponibilidad: "En Stock",
-        costoBaseUSD: 585,
-        precioDirectoUSD: 645,
-        tipoCotizacion: "blue",
-        bateria: "100%",
-        stock: 3,
-        specs: "256GB · Natural Titanium · Estética A+",
-        imagenes: ["img/iphone-15-pro-natural-256gb.jpg"]
-      },
-      {
-        id: 1302,
-        nombre: "iPhone 13 Pro Max",
-        categoria: "iphone",
-        condicion: "Como Nuevo",
-        disponibilidad: "En Stock",
-        costoBaseUSD: 470,
-        precioDirectoUSD: 525,
-        tipoCotizacion: "blue",
-        bateria: "100%",
-        stock: 3,
-        specs: "256GB · Graphite · Estética A+",
-        imagenes: ["img/iphone-13-pro-max-graphite-256gb.jpg"]
-      },
-      {
-        id: 1303,
-        nombre: "iPhone 13 Pro Max",
-        categoria: "iphone",
-        condicion: "Como Nuevo",
-        disponibilidad: "En Stock",
-        costoBaseUSD: 470,
-        precioDirectoUSD: 525,
-        tipoCotizacion: "blue",
-        bateria: "100%",
-        stock: 2,
-        specs: "256GB · Gold · Estética A+",
-        imagenes: ["img/iphone-13-pro-max-gold-256gb.jpg"]
-      }
-    ];
+    // El catálogo real viene de la nube (/api/jsonbin). Mientras carga mostramos
+    // la última copia guardada en este navegador (si hay) o tarjetas "esqueleto".
+    const CLAVE_CACHE = 'matos_catalogo_publico_v1';
+    let productos = JSON.parse(localStorage.getItem(CLAVE_CACHE) || '[]');
+    let catalogoCargado = false;
+    let productoAbiertoId = null;
 
     async function cargarProductosRemotos() {
       try {
@@ -694,40 +708,17 @@
           throw new Error(datos.error || `Error HTTP: ${response.status}`);
         }
         const record = datos.record || datos.items || datos;
-        if (record && record.length) {
+        if (Array.isArray(record)) {
           productos = record;
-          localStorage.setItem('matos_productos_v6', JSON.stringify(productos));
+          localStorage.setItem(CLAVE_CACHE, JSON.stringify(productos));
         }
-        renderProductos(getFilteredProducts());
-        return datos;
       } catch (error) {
-        console.error('Error al cargar datos desde la Netlify Function:', error.message);
-        const guardadosLocal = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
-        if (guardadosLocal.length) productos = guardadosLocal;
-        renderProductos(getFilteredProducts());
+        console.error('Error al cargar el catálogo:', error.message);
       }
-    }
-
-    async function guardarProductosRemotos() {
-      localStorage.setItem('matos_productos_v6', JSON.stringify(productos));
-      try {
-        const response = await fetch('/api/jsonbin', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(productos)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const resultado = await response.json();
-        return resultado;
-      } catch (error) {
-        console.error('Error al guardar datos:', error);
-      }
+      catalogoCargado = true;
+      renderProductos(getFilteredProducts());
+      updateCartUI();
+      abrirProductoDesdeURL();
     }
 
     function calcularPrecioProducto(producto) {
@@ -766,7 +757,7 @@
     function mensajeWhatsAppProducto(prod, calculo) {
       const bateriaTxt = prod.bateria && prod.bateria !== 'N/A' ? ` · Batería ${prod.bateria}` : '';
       const imeiTxt = prod.imei ? ` - (imei ...${prod.imei})` : '';
-      return `Hola! Me interesa este equipo del catálogo:\n${prod.nombre} · ${prod.specs}${bateriaTxt}${imeiTxt}\nPrecio contado: USD ${moneyUSD(calculo.precioFinalUSD)}\n¿Sigue disponible?`;
+      return `Hola! Me interesa este equipo del catálogo:\n${prod.nombre} · ${prod.specs}${bateriaTxt}${imeiTxt}\nPrecio contado: USD ${moneyUSD(calculo.precioFinalUSD)}\n${linkProducto(prod.id)}\n¿Sigue disponible?`;
     }
 
     function consultarProductoWhatsApp(id) {
@@ -801,7 +792,7 @@
     function setupWhatsAppLinks() {
       const message = 'Hola, Matos iPhone Rosario 👋 Quisiera consultar sobre el stock disponible y las 18 cuotas fijas.';
       const url = whatsappURL(message);
-      ['header-whatsapp', 'mobile-whatsapp', 'hero-whatsapp', 'floating-whatsapp', 'banner-cuotas-whatsapp'].forEach(id => {
+      ['header-whatsapp', 'mobile-whatsapp', 'hero-whatsapp', 'floating-whatsapp', 'banner-cuotas-whatsapp', 'footer-whatsapp'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.href = url;
       });
@@ -895,8 +886,25 @@
 
     function getFilteredProducts() {
       const base = getCategoryFilteredProducts();
-      if (lineaActual === 'todas') return base;
-      return base.filter(producto => extractLinea(producto.nombre) === lineaActual);
+      const lista = lineaActual === 'todas' ? base : base.filter(producto => extractLinea(producto.nombre) === lineaActual);
+      return ordenarProductos(lista);
+    }
+
+    // Orden elegido por el visitante. Los "Sin stock" siempre quedan al final.
+    function ordenarProductos(lista) {
+      const orden = (document.getElementById('orden-select') || {}).value || 'relevancia';
+      const generacion = p => parseInt((extractLinea(p.nombre) || '').replace(/\D/g, ''), 10) || 0;
+      const bateria = p => parseInt(String(p.bateria || '').replace(/\D/g, ''), 10) || 0;
+      const comparadores = {
+        'relevancia': () => 0, // respeta el orden que cargaste en el panel
+        'nuevos': (a, b) => generacion(b) - generacion(a),
+        'precio-asc': (a, b) => Number(a.precioDirectoUSD) - Number(b.precioDirectoUSD),
+        'precio-desc': (a, b) => Number(b.precioDirectoUSD) - Number(a.precioDirectoUSD),
+        'bateria': (a, b) => bateria(b) - bateria(a)
+      };
+      const cmp = comparadores[orden] || comparadores.relevancia;
+      return [...lista].sort((a, b) =>
+        ((estadoDisp(a) === 'Sin stock') - (estadoDisp(b) === 'Sin stock')) || cmp(a, b));
     }
 
     function renderLineaTabs(baseList) {
@@ -957,7 +965,25 @@
       const empty = document.getElementById('empty-state');
       const info = document.getElementById('results-info');
 
-      info.textContent = `${lista.length} ${lista.length === 1 ? 'producto disponible' : 'productos disponibles'}`;
+      // Primera visita, todavía cargando: tarjetas "esqueleto" en vez de "no encontramos equipos"
+      if (!catalogoCargado && !productos.length) {
+        info.textContent = 'Cargando catálogo...';
+        empty.classList.add('hidden');
+        grid.innerHTML = Array.from({ length: 8 }, () => `
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden animate-pulse">
+            <div class="h-64 bg-slate-100"></div>
+            <div class="p-5 space-y-3">
+              <div class="h-3 w-16 bg-slate-100 rounded"></div>
+              <div class="h-5 w-40 bg-slate-200 rounded"></div>
+              <div class="h-3 w-full bg-slate-100 rounded"></div>
+              <div class="h-7 w-28 bg-slate-200 rounded mt-6"></div>
+            </div>
+          </div>`).join('');
+        return;
+      }
+
+      const disponibles = lista.filter(p => estadoDisp(p) !== 'Sin stock').length;
+      info.textContent = `${lista.length} ${lista.length === 1 ? 'producto' : 'productos'} · ${disponibles} ${disponibles === 1 ? 'disponible' : 'disponibles'}`;
 
       if (!lista.length) {
         grid.innerHTML = '';
@@ -980,13 +1006,13 @@
         const conditionLabel = prod.condicion === 'Nuevo' ? 'SELLADO' : prod.condicion === 'Open Box' ? 'OPEN BOX' : 'USADO';
 
         return `
-          <article class="product-card bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-premium flex flex-col justify-between cursor-pointer" onclick="openProductModal(${prod.id})">
+          <article class="product-card bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-premium flex flex-col justify-between cursor-pointer" onclick="openProductModal(${prod.id})" onkeydown="if (event.key === 'Enter') openProductModal(${prod.id})" tabindex="0" role="button" aria-label="Ver ${escapeHTML(prod.nombre)}">
             <div>
               <div class="w-full text-left">
                 <!-- INTEGRACIÓN DE LA ESTRUCTURA HTML REQUERIDA CON .imagen-equipo -->
                 <div class="imagen-equipo relative h-64 bg-slate-100 overflow-hidden flex items-center justify-center">
                   ${mainImage ? `
-                    <img src="${escapeHTML(mainImage)}" alt="${escapeHTML(prod.nombre)}" class="product-image w-full h-full object-cover ${sinStock ? 'grayscale opacity-60' : ''}">
+                    <img src="${escapeHTML(mainImage)}" alt="${escapeHTML(prod.nombre + ' ' + (prod.specs || ''))}" loading="lazy" decoding="async" class="product-image w-full h-full object-cover ${sinStock ? 'grayscale opacity-60' : ''}">
                   ` : `
                     <div class="text-slate-400 font-bold text-lg p-6 text-center">${escapeHTML(prod.nombre)}<br><span class="text-xs text-slate-500 font-normal">${escapeHTML(prod.specs)}</span></div>
                   `}
@@ -1077,7 +1103,7 @@
           <div>
             <div id="modal-main-image-container" class="imagen-equipo bg-slate-100 rounded-3xl overflow-hidden mb-3 aspect-square flex items-center justify-center">
               ${mainModalImg ? `
-                <img src="${escapeHTML(mainModalImg)}" class="w-full h-full object-cover">
+                <img src="${escapeHTML(mainModalImg)}" alt="${escapeHTML(prod.nombre + ' ' + (prod.specs || ''))}" class="w-full h-full object-cover">
               ` : `
                 <div class="text-center p-6">
                   <h3 class="font-heading text-3xl font-black">${escapeHTML(prod.nombre)}</h3>
@@ -1141,6 +1167,9 @@
                 ${tieneRebaja(prod) ? `<span class="text-lg text-slate-400 line-through">$${moneyUSD(prod.precioOriginalUSD)}</span>` : ''}
               </div>
               <p class="text-sm text-slate-500 mt-1">≈ $${moneyARS(calculo.precioFinalARS)} ARS de referencia</p>
+              <p class="mt-3 inline-flex items-center gap-2 text-sm font-bold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+                <i class="fa-solid fa-credit-card"></i>Hasta 18 cuotas fijas · aceptamos tu usado en canje
+              </p>
             </div>
             <div class="mt-7 grid sm:grid-cols-2 gap-2">
               <button ${estadoDisp(prod) === 'Sin stock' ? 'disabled' : ''} onclick="addToCart(${prod.id}); closeProductModal()" class="bg-matos ${estadoDisp(prod) === 'Sin stock' ? 'opacity-40 cursor-not-allowed' : 'hover:bg-blue-700'} text-white py-3.5 rounded-xl font-extrabold flex items-center justify-center">
@@ -1155,6 +1184,40 @@
       `;
       document.getElementById('product-modal').classList.remove('hidden');
       document.body.classList.add('overflow-hidden');
+
+      // Cada equipo tiene su propio link (ej. matosiphonesrosario.com.ar/#equipo-1502)
+      // para compartirlo por WhatsApp o en historias de Instagram.
+      productoAbiertoId = prod.id;
+      if (location.hash !== `#equipo-${prod.id}`) history.replaceState(null, '', `#equipo-${prod.id}`);
+      document.title = `${prod.nombre} ${prod.specs ? '· ' + prod.specs.split('·')[0].trim() : ''} | Matos iPhone Rosario`;
+    }
+
+    function linkProducto(id) {
+      return `${location.origin}${location.pathname}#equipo-${id}`;
+    }
+
+    async function compartirProducto() {
+      const prod = productos.find(p => p.id === productoAbiertoId);
+      if (!prod) return;
+      const url = linkProducto(prod.id);
+      const texto = `${prod.nombre} · ${prod.specs || ''} — Matos iPhone Rosario`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: prod.nombre, text: texto, url });
+          return;
+        }
+        await navigator.clipboard.writeText(url);
+        showToast('Link copiado 📋');
+      } catch (e) {
+        if (e && e.name !== 'AbortError') prompt('Copiá el link del equipo:', url);
+      }
+    }
+
+    function abrirProductoDesdeURL() {
+      const match = location.hash.match(/^#equipo-(.+)$/);
+      if (!match) return;
+      const prod = productos.find(p => String(p.id) === decodeURIComponent(match[1]));
+      if (prod && productoAbiertoId !== prod.id) openProductModal(prod.id);
     }
 
     function setModalMedia(url, tipo) {
@@ -1170,17 +1233,50 @@
     function closeProductModal() {
       document.getElementById('product-modal').classList.add('hidden');
       document.body.classList.remove('overflow-hidden');
+      productoAbiertoId = null;
+      if (location.hash.startsWith('#equipo-')) history.replaceState(null, '', location.pathname + location.search);
+      document.title = TITULO_ORIGINAL;
+    }
+
+    const TITULO_ORIGINAL = document.title;
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (!document.getElementById('product-modal').classList.contains('hidden')) closeProductModal();
+      else if (!document.getElementById('cart-panel').classList.contains('translate-x-full')) toggleCart();
+    });
+    window.addEventListener('hashchange', abrirProductoDesdeURL);
+
+    // Máximo que se puede pedir: el stock cargado (o sin límite práctico si es "A pedido")
+    function maxPedible(prod) {
+      if (estadoDisp(prod) === 'A pedido') return 10;
+      return Math.max(0, Number(prod.stock) || 0);
     }
 
     function addToCart(id) {
       const prod = productos.find(p => p.id === id);
       if (!prod || estadoDisp(prod) === 'Sin stock') return;
       const item = carrito.find(p => p.id === id);
+      if (item && item.cantidad >= maxPedible(prod)) {
+        showToast(`Tenemos ${maxPedible(prod)} disponible${maxPedible(prod) === 1 ? '' : 's'} de este equipo`);
+        return;
+      }
       if (item) item.cantidad++;
       else carrito.push({ id: prod.id, cantidad: 1 });
       saveCart();
       updateCartUI();
       showToast(`${prod.nombre} agregado al carrito`);
+    }
+
+    function cambiarCantidad(id, delta) {
+      const item = carrito.find(p => p.id === id);
+      const prod = productos.find(p => p.id === id);
+      if (!item || !prod) return;
+      const nueva = item.cantidad + delta;
+      if (nueva <= 0) return removeFromCart(id);
+      if (nueva > maxPedible(prod)) return showToast('No hay más unidades disponibles');
+      item.cantidad = nueva;
+      saveCart();
+      updateCartUI();
     }
 
     function removeFromCart(id) {
@@ -1194,8 +1290,26 @@
       const countEl = document.getElementById('cart-count');
       let totalUSD = 0, totalARS = 0, totalCount = 0;
 
+      // Si ya cargó el catálogo, sacamos del carrito lo que se vendió o ya no existe
+      if (catalogoCargado) {
+        const antes = carrito.length;
+        carrito = carrito.filter(item => {
+          const prod = productos.find(p => p.id === item.id);
+          return prod && estadoDisp(prod) !== 'Sin stock';
+        });
+        if (carrito.length !== antes) {
+          saveCart();
+          showToast('Un equipo de tu carrito ya no está disponible');
+        }
+      }
+
       if (!carrito.length) {
-        container.innerHTML = `<p class="text-center py-10 text-slate-400 text-sm">Tu carrito está vacío</p>`;
+        container.innerHTML = `
+          <div class="text-center py-14">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl"><i class="fa-solid fa-bag-shopping"></i></div>
+            <p class="mt-3 text-slate-500 text-sm">Tu carrito está vacío</p>
+            <button onclick="toggleCart(); setCategory('iphone')" class="mt-4 text-sm font-bold text-blue-600 hover:underline">Ver iPhones</button>
+          </div>`;
       } else {
         container.innerHTML = carrito.map(item => {
           const prod = productos.find(p => p.id === item.id);
@@ -1204,17 +1318,25 @@
           const subUSD = calculo.precioFinalUSD * item.cantidad;
           const subARS = calculo.precioFinalARS * item.cantidad;
           totalUSD += subUSD; totalARS += subARS; totalCount += item.cantidad;
+          const img = prod.imagenes && prod.imagenes[0];
 
           return `
             <div class="flex gap-3 p-3 rounded-2xl border border-slate-200 bg-white items-center">
-              <div class="flex-1">
-                <div class="flex justify-between">
-                  <h4 class="font-bold text-sm">${escapeHTML(prod.nombre)}</h4>
-                  <button onclick="removeFromCart(${item.id})" class="text-slate-400"><i class="fa-solid fa-trash-can"></i></button>
+              <div class="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                ${img ? `<img src="${escapeHTML(img)}" alt="" class="w-full h-full object-cover" loading="lazy">` : ''}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between gap-2">
+                  <h4 class="font-bold text-sm truncate">${escapeHTML(prod.nombre)}</h4>
+                  <button onclick="removeFromCart(${item.id})" class="text-slate-400 hover:text-red-500" aria-label="Quitar"><i class="fa-solid fa-trash-can"></i></button>
                 </div>
-                <p class="text-xs text-slate-500">${escapeHTML(prod.specs)}</p>
+                <p class="text-xs text-slate-500 truncate">${escapeHTML(prod.specs)}</p>
                 <div class="flex justify-between items-center mt-2">
-                  <span class="text-xs font-bold">${item.cantidad} un.</span>
+                  <div class="flex items-center rounded-lg border border-slate-200">
+                    <button onclick="cambiarCantidad(${item.id}, -1)" class="w-7 h-7 text-slate-500 hover:text-slate-900" aria-label="Restar">−</button>
+                    <span class="w-6 text-center text-xs font-bold">${item.cantidad}</span>
+                    <button onclick="cambiarCantidad(${item.id}, 1)" class="w-7 h-7 text-slate-500 hover:text-slate-900" aria-label="Sumar">+</button>
+                  </div>
                   <strong class="text-sm">$${moneyUSD(subUSD)} USD</strong>
                 </div>
               </div>
@@ -1224,8 +1346,11 @@
       }
 
       countEl.textContent = totalCount;
+      countEl.classList.toggle('hidden', totalCount === 0);
       document.getElementById('cart-total-usd').textContent = `$${moneyUSD(totalUSD)} USD`;
       document.getElementById('cart-total-ars').textContent = `$${moneyARS(totalARS)} ARS`;
+      const btn = document.getElementById('cart-send-btn');
+      if (btn) btn.disabled = totalCount === 0;
     }
 
     function toggleCart() {
@@ -1237,17 +1362,27 @@
     }
 
     function enviarPedidoWhatsApp() {
-      let message = `Hola Matos iPhone Rosario 👋\nQuiero consultar mi pedido:\n`;
+      if (!carrito.length) return;
+      let totalUSD = 0, totalARS = 0;
+      let message = `Hola Matos iPhone Rosario 👋\nQuiero reservar este pedido:\n\n`;
       carrito.forEach(item => {
         const prod = productos.find(p => p.id === item.id);
-        if (prod) message += `• ${prod.nombre} (${prod.specs}) x${item.cantidad}\n`;
+        if (!prod) return;
+        const calculo = calcularPrecioProducto(prod);
+        totalUSD += calculo.precioFinalUSD * item.cantidad;
+        totalARS += calculo.precioFinalARS * item.cantidad;
+        const bat = prod.bateria && prod.bateria !== 'N/A' ? ` · Bat. ${prod.bateria}` : '';
+        message += `• ${prod.nombre} (${prod.specs}${bat}) x${item.cantidad} — USD ${moneyUSD(calculo.precioFinalUSD * item.cantidad)}\n`;
       });
+      message += `\nTotal: USD ${moneyUSD(totalUSD)} (≈ $${moneyARS(totalARS)} ARS)\n¿Me pasan disponibilidad y planes de cuotas?`;
       window.open(whatsappURL(message), '_blank', 'noopener');
     }
 
     setupWhatsAppLinks();
     updateCategoryButtons();
     updateCartUI();
+    renderProductos(getFilteredProducts());
+    document.getElementById('anio-actual').textContent = new Date().getFullYear();
 
     document.addEventListener('DOMContentLoaded', () => {
       obtenerDolarBlueRosario();

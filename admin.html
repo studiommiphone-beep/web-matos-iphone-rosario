@@ -479,17 +479,25 @@
 
     async function cargarProductosRemotos() {
       try {
-        const response = await fetch('/api/jsonbin', { cache: 'no-store' });
+        // Con la contraseña la API devuelve también los costos (el público no los ve)
+        const response = await fetch('/api/jsonbin', { cache: 'no-store', headers: authHeaders() });
         const datos = await response.json();
         if (!response.ok || datos.error) {
           throw new Error(datos.error || `Error HTTP: ${response.status}`);
         }
         const record = datos.record || datos.items || datos;
+        // Seguridad: si por algún motivo llegó la versión pública (sin costos),
+        // NO la usamos, para no pisar tus costos al guardar.
+        if (record && record.length && !record.some(p => 'costoBaseUSD' in p)) {
+          throw new Error('La sesión no trae los costos (¿contraseña vencida?). Volvé a ingresar al panel.');
+        }
         if (record && record.length) productos = record;
         setSyncStatus('ok');
       } catch (error) {
         console.error('Error al cargar productos:', error.message);
-        productos = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
+        const copiaLocal = JSON.parse(localStorage.getItem('matos_productos_v6') || '[]');
+        // Solo usamos la copia local si es la del admin (con costos)
+        productos = copiaLocal.some(p => 'costoBaseUSD' in p) ? copiaLocal : [];
         setSyncStatus('error', error.message);
       }
       renderAdminTable();
