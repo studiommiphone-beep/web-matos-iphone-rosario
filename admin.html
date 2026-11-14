@@ -468,9 +468,12 @@
 
     async function obtenerDolarBlueRosario() {
       try {
-        const response = await fetch("https://dolarapi.com/v1/dolares/blue", { method: "GET", cache: "no-store" });
+        // Dólar Blue Rosario (venta) de infodolar.com, leído por el servidor (api/dolar.js)
+        const response = await fetch('/api/dolar');
         const data = await response.json();
-        if (data.venta) dolarBlueRosario = Number(data.venta);
+        if (data.blue > 0) dolarBlueRosario = Number(data.blue);
+        if (data.oficial > 0) dolarOficial = Number(data.oficial);
+        if (data.tarjeta > 0) dolarTarjeta = Number(data.tarjeta);
       } catch (error) {
         dolarBlueRosario = CONFIG.dolarInicial;
       }
